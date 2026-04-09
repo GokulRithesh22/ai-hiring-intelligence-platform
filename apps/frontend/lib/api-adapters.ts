@@ -6,7 +6,7 @@ import {
   hrDashboardData,
   jobIntakeQuestions,
   landingContent,
-  screeningResult
+  screeningResult as mockApplicationSubmissionResult
 } from "@/lib/mock-data";
 import type {
   ApplicationSubmissionResult,
@@ -1305,10 +1305,13 @@ export async function submitCandidateApplication(
 ): Promise<ApplicationSubmissionResult> {
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(360);
-    return {
-      ...screeningResult,
-      interviewQuestions: payload.resumeFile ? screeningResult.interviewQuestions : []
+    const fallbackResult: ApplicationSubmissionResult = {
+      ...mockApplicationSubmissionResult,
+      interviewQuestions: payload.resumeFile
+        ? mockApplicationSubmissionResult.interviewQuestions
+        : []
     };
+    return fallbackResult;
   }
 
   try {
@@ -1339,10 +1342,13 @@ export async function submitCandidateApplication(
 
     return (await response.json()) as ApplicationSubmissionResult;
   } catch {
-    return {
-      ...screeningResult,
-      interviewQuestions: payload.resumeFile ? screeningResult.interviewQuestions : []
+    const fallbackResult: ApplicationSubmissionResult = {
+      ...mockApplicationSubmissionResult,
+      interviewQuestions: payload.resumeFile
+        ? mockApplicationSubmissionResult.interviewQuestions
+        : []
     };
+    return fallbackResult;
   }
 }
 
