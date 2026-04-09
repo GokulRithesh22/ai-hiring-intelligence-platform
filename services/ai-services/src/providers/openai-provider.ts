@@ -37,7 +37,7 @@ export class OpenAiStructuredProvider implements StructuredAiProvider {
         }
       ],
       text: {
-        format: zodTextFormat(request.outputSchema, request.taskName)
+        format: zodTextFormat(request.outputSchema as never, request.taskName)
       },
       metadata: {
         service: "ai-hiring-intelligence",
