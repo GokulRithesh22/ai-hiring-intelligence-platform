@@ -4,9 +4,9 @@ import { useState, useTransition } from "react";
 import { submitCandidateApplication } from "@/lib/api-adapters";
 import { VoiceInterviewPanel } from "@/components/candidate/voice-interview-panel";
 import type {
+  ApplicationSubmissionResult,
   ApplicationPortalData,
-  CandidateApplicationPayload,
-  ScreeningResult
+  CandidateApplicationPayload
 } from "@/lib/types";
 
 type CandidateApplicationPortalProps = {
@@ -20,13 +20,16 @@ export function CandidateApplicationPortal({
     jobId: portal.job.id,
     fullName: "Aarav Mehta",
     email: "aarav.mehta@example.com",
-    linkedInUrl: "https://www.linkedin.com/in/aarav-mehta",
-    resumeFileName: "",
-    joiningTimeline: "30 days",
-    salaryExpectation: "₹28L",
+    phone: "+91 9876543210",
+    linkedInUrl: "",
+    resumeFile: null,
+    earliestJoiningDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
+      .toISOString()
+      .slice(0, 10),
+    expectedCtc: "2800000",
     relocation: "Open"
   });
-  const [result, setResult] = useState<ScreeningResult | null>(null);
+  const [result, setResult] = useState<ApplicationSubmissionResult | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const updateField = <K extends keyof CandidateApplicationPayload>(
@@ -40,6 +43,10 @@ export function CandidateApplicationPortal({
   };
 
   const handleSubmit = () => {
+    if (!form.resumeFile) {
+      return;
+    }
+
     startTransition(async () => {
       const response = await submitCandidateApplication(form);
       setResult(response);
@@ -124,28 +131,34 @@ export function CandidateApplicationPortal({
             />
           </label>
           <label className="field">
+            <span>Phone</span>
+            <input
+              value={form.phone ?? ""}
+              onChange={(event) => updateField("phone", event.target.value)}
+            />
+          </label>
+          <label className="field">
             <span>LinkedIn URL</span>
             <input
-              value={form.linkedInUrl}
+              type="url"
+              placeholder="Optional LinkedIn profile URL"
+              value={form.linkedInUrl ?? ""}
               onChange={(event) => updateField("linkedInUrl", event.target.value)}
             />
           </label>
           <label className="field">
-            <span>Joining timeline</span>
-            <select
-              value={form.joiningTimeline}
-              onChange={(event) => updateField("joiningTimeline", event.target.value)}
-            >
-              <option value="30 days">30 days</option>
-              <option value="45 days">45 days</option>
-              <option value="60 days">60 days</option>
-            </select>
+            <span>Earliest joining date</span>
+            <input
+              type="date"
+              value={form.earliestJoiningDate}
+              onChange={(event) => updateField("earliestJoiningDate", event.target.value)}
+            />
           </label>
           <label className="field">
-            <span>Expected salary</span>
+            <span>Expected CTC</span>
             <input
-              value={form.salaryExpectation}
-              onChange={(event) => updateField("salaryExpectation", event.target.value)}
+              value={form.expectedCtc}
+              onChange={(event) => updateField("expectedCtc", event.target.value)}
             />
           </label>
           <label className="field">
@@ -164,54 +177,53 @@ export function CandidateApplicationPortal({
         <label className="dropzone">
           <span>Resume upload</span>
           <span className="muted">
-            Object storage integration can replace this with signed upload URLs.
+            Supported formats: PDF, DOCX, and TXT.
           </span>
           <input
             type="file"
-            accept=".pdf,.doc,.docx"
+            accept=".pdf,.docx,.txt"
             onChange={(event) =>
-              updateField("resumeFileName", event.target.files?.[0]?.name ?? "")
+              updateField("resumeFile", event.target.files?.[0] ?? null)
             }
           />
           <span className="muted">
-            {form.resumeFileName ? `Attached: ${form.resumeFileName}` : "No file selected yet"}
+            {form.resumeFile ? `Attached: ${form.resumeFile.name}` : "No file selected yet"}
           </span>
         </label>
 
         <div className="shell-actions">
-          <button className="button button-primary" type="button" onClick={handleSubmit}>
+          <button
+            className="button button-primary"
+            type="button"
+            onClick={handleSubmit}
+            disabled={isPending || !form.resumeFile}
+          >
             {isPending ? "Running screening..." : "Submit application"}
           </button>
           <span className="muted">
-            The mock adapter returns resume matching, qualification fit, and interview
-            readiness.
+            Your resume is analyzed semantically. Internal scoring is hidden from candidates.
           </span>
         </div>
 
         {!result ? null : (
           <div className="stack">
-            <div className="summary-grid">
-              <article>
-                <span className="subtle-label">Resume score</span>
-                <strong>{result.resumeScore}</strong>
-                <span className="muted">{result.resumeAssessment}</span>
-              </article>
-              <article>
-                <span className="subtle-label">Qualification fit</span>
-                <strong>{result.qualificationResult}</strong>
-                <span className="muted">{result.qualificationReason}</span>
-              </article>
-              <article>
-                <span className="subtle-label">Pipeline decision</span>
-                <strong>{result.nextStep}</strong>
-                <span className="muted">{result.statusMessage}</span>
-              </article>
-              <article>
-                <span className="subtle-label">Interview plan</span>
-                <strong>{result.interviewQuestions.length} questions</strong>
-                <span className="muted">AI-generated from resume and role</span>
-              </article>
-            </div>
+            <article className="history-item">
+              <div className="panel-heading">
+                <div>
+                  <strong>Application submitted</strong>
+                  <p className="muted">{result.statusMessage}</p>
+                </div>
+                <span
+                  className={`status-pill ${result.status === "qualified" ? "status-approved" : "status-progress"}`}
+                >
+                  {result.status === "qualified" ? "Interview invited" : "Under review"}
+                </span>
+              </div>
+              <p className="muted">
+                {result.interviewInvitation ??
+                  "We have stored your application and will email you if the next stage opens."}
+              </p>
+            </article>
 
             <div className="question-list">
               {result.interviewQuestions.map((question, index) => (
@@ -223,7 +235,11 @@ export function CandidateApplicationPortal({
             </div>
 
             {result.interviewQuestions.length === 0 ? null : (
-              <VoiceInterviewPanel questions={result.interviewQuestions} />
+              <VoiceInterviewPanel
+                questions={result.interviewQuestions}
+                interviewSessionId={result.interviewSessionId ?? null}
+                applicationId={result.applicationId}
+              />
             )}
           </div>
         )}

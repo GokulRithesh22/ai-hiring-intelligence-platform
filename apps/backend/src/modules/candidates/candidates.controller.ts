@@ -21,6 +21,14 @@ export const candidatesController = {
     response.json({ items: await candidatesService.listCandidates() });
   }),
 
+  getCandidateIntelligence: asyncHandler(async (request, response) => {
+    response.json(
+      await candidatesService.getCandidateIntelligence(
+        getRouteParam(request.params.candidateId, "candidateId")
+      )
+    );
+  }),
+
   getCandidate: asyncHandler(async (request, response) => {
     response.json(
       await candidatesService.getCandidate(getRouteParam(request.params.candidateId, "candidateId"))

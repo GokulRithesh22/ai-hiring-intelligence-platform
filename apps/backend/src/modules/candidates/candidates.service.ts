@@ -1,6 +1,7 @@
-import type { CreateCandidateInput } from "@ai-hiring/shared-types";
+import type { Candidate, CreateCandidateInput, HrCandidateDetail } from "@ai-hiring/shared-types";
 
 import { ApiError } from "../../lib/http";
+import { hrRepository } from "../hr/hr.repository";
 import { candidatesRepository } from "./candidates.repository";
 
 export class CandidatesService {
@@ -18,9 +19,24 @@ export class CandidatesService {
     return candidate;
   }
 
-  async createCandidate(input: CreateCandidateInput) {
+  async getCandidateIntelligence(candidateId: string): Promise<HrCandidateDetail> {
+    const detail = await hrRepository.getCandidateDetail(candidateId);
+
+    if (!detail) {
+      throw new ApiError(404, "Candidate intelligence not found");
+    }
+
+    return detail;
+  }
+
+  async createCandidate(input: CreateCandidateInput): Promise<Candidate> {
     const existing = await candidatesRepository.findByEmail(input.email);
-    return existing ?? candidatesRepository.create(input);
+    if (existing) {
+      const updated = await candidatesRepository.update(existing.id, input);
+      return updated ?? existing;
+    }
+
+    return candidatesRepository.create(input);
   }
 }
 

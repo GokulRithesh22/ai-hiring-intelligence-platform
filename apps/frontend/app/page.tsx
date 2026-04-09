@@ -10,7 +10,7 @@ export default async function HomePage() {
       content={content}
       actions={
         <>
-          <Link className="button button-primary" href="/manager/jobs/create">
+          <Link className="button button-primary" href="/manager/dashboard">
             Create Job With AI
           </Link>
           <Link className="button button-secondary" href="/hr/dashboard">

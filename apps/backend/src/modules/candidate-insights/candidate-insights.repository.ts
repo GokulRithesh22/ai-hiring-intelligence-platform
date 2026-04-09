@@ -1,5 +1,6 @@
 import { query } from "@ai-hiring/database";
-import type { CandidateInsight } from "@ai-hiring/shared-types";
+import type { CandidateInsight, CandidateScore } from "@ai-hiring/shared-types";
+import { candidateScoresRepository } from "../applications/candidate-scores.repository";
 
 interface InsightRow {
   id: string;
@@ -18,7 +19,8 @@ interface InsightRow {
 
 function mapInsight(
   row: InsightRow,
-  applicationHistory: CandidateInsight["applicationHistory"] = []
+  applicationHistory: CandidateInsight["applicationHistory"] = [],
+  candidateScore: CandidateScore | null = null
 ): CandidateInsight {
   return {
     id: row.id,
@@ -31,6 +33,9 @@ function mapInsight(
     claimVerificationFlags: row.claim_verification_flags ?? [],
     suggestedManagerQuestions: row.suggested_manager_questions ?? [],
     hiringRecommendation: row.hiring_recommendation,
+    candidateScore:
+      candidateScore ??
+      (((row.evaluation_scores ?? {}).candidateScore as CandidateScore | undefined) ?? null),
     applicationHistory,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString()
@@ -39,10 +44,13 @@ function mapInsight(
 
 export class CandidateInsightsRepository {
   async findByCandidateId(candidateId: string): Promise<CandidateInsight | null> {
-    const insightResult = await query<InsightRow>(
-      "SELECT * FROM candidate_insights WHERE candidate_id = $1 LIMIT 1",
-      [candidateId]
-    );
+    const [insightResult, latestCandidateScore] = await Promise.all([
+      query<InsightRow>(
+        "SELECT * FROM candidate_insights WHERE candidate_id = $1 LIMIT 1",
+        [candidateId]
+      ),
+      candidateScoresRepository.findLatestByCandidateId(candidateId)
+    ]);
 
     const row = insightResult.rows[0];
     if (!row) {
@@ -70,7 +78,8 @@ export class CandidateInsightsRepository {
         jobTitle: item.title,
         status: item.status,
         appliedAt: item.applied_at.toISOString()
-      }))
+      })),
+      latestCandidateScore
     );
   }
 
@@ -102,13 +111,21 @@ export class CandidateInsightsRepository {
         ON CONFLICT (candidate_id)
         DO UPDATE SET
           latest_application_id = EXCLUDED.latest_application_id,
-          resume_analysis = EXCLUDED.resume_analysis,
-          linkedin_insights = EXCLUDED.linkedin_insights,
-          interview_transcript = EXCLUDED.interview_transcript,
-          evaluation_scores = EXCLUDED.evaluation_scores,
-          claim_verification_flags = EXCLUDED.claim_verification_flags,
-          suggested_manager_questions = EXCLUDED.suggested_manager_questions,
-          hiring_recommendation = EXCLUDED.hiring_recommendation,
+          resume_analysis = candidate_insights.resume_analysis || EXCLUDED.resume_analysis,
+          linkedin_insights = candidate_insights.linkedin_insights || EXCLUDED.linkedin_insights,
+          interview_transcript = COALESCE(EXCLUDED.interview_transcript, candidate_insights.interview_transcript),
+          evaluation_scores = candidate_insights.evaluation_scores || EXCLUDED.evaluation_scores,
+          claim_verification_flags = CASE
+            WHEN EXCLUDED.claim_verification_flags = '[]'::jsonb
+              THEN candidate_insights.claim_verification_flags
+            ELSE EXCLUDED.claim_verification_flags
+          END,
+          suggested_manager_questions = CASE
+            WHEN EXCLUDED.suggested_manager_questions = '[]'::jsonb
+              THEN candidate_insights.suggested_manager_questions
+            ELSE EXCLUDED.suggested_manager_questions
+          END,
+          hiring_recommendation = COALESCE(EXCLUDED.hiring_recommendation, candidate_insights.hiring_recommendation),
           updated_at = NOW()
         RETURNING *
       `,

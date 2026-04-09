@@ -3,6 +3,7 @@ import type {
   ApplicationStatus,
   Candidate,
   CandidateInsight,
+  CandidateScore,
   HrAnalyticsData,
   HrCandidateApplicationHistoryItem,
   HrCandidateDetail,
@@ -18,6 +19,7 @@ import type {
 } from "@ai-hiring/shared-types";
 
 import { toNumber } from "../../lib/validation";
+import { candidateScoresRepository } from "../applications/candidate-scores.repository";
 
 type CountRow = { count: string };
 
@@ -76,7 +78,8 @@ function normalizeInsight(
     created_at: Date;
     updated_at: Date;
   },
-  applicationHistory: CandidateInsight["applicationHistory"]
+  applicationHistory: CandidateInsight["applicationHistory"],
+  candidateScore: CandidateScore | null
 ): CandidateInsight {
   return {
     id: row.id,
@@ -89,6 +92,7 @@ function normalizeInsight(
     claimVerificationFlags: row.claim_verification_flags ?? [],
     suggestedManagerQuestions: row.suggested_manager_questions ?? [],
     hiringRecommendation: row.hiring_recommendation,
+    candidateScore,
     applicationHistory,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString()
@@ -128,6 +132,46 @@ function normalizeInterviewSession(
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     items
+  };
+}
+
+function normalizeScreeningResult(row: {
+  id: string;
+  application_id: string;
+  candidate_id: string;
+  job_id: string;
+  semantic_similarity: string;
+  experience_match: string;
+  skills_match: string;
+  domain_match: string;
+  achievements_match: string;
+  final_score: string;
+  resume_analysis: Record<string, unknown> | null;
+  job_analysis: Record<string, unknown> | null;
+  reasoning_summary: string | null;
+  strengths: string[] | null;
+  weaknesses: string[] | null;
+  created_at: Date;
+  updated_at: Date;
+}) {
+  return {
+    id: row.id,
+    applicationId: row.application_id,
+    candidateId: row.candidate_id,
+    jobId: row.job_id,
+    semanticSimilarity: toNumber(row.semantic_similarity) ?? 0,
+    experienceMatch: toNumber(row.experience_match) ?? 0,
+    skillsMatch: toNumber(row.skills_match) ?? 0,
+    domainMatch: toNumber(row.domain_match) ?? 0,
+    achievementsMatch: toNumber(row.achievements_match) ?? 0,
+    finalScore: toNumber(row.final_score) ?? 0,
+    resumeAnalysis: row.resume_analysis ?? {},
+    jobAnalysis: row.job_analysis ?? {},
+    reasoningSummary: row.reasoning_summary,
+    strengths: row.strengths ?? [],
+    weaknesses: row.weaknesses ?? [],
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString()
   };
 }
 
@@ -453,7 +497,8 @@ export class HrRepository {
       interviewScore: toNumber(row.interview_score)
     }));
 
-    const insightResult = await query<{
+    const [insightResult, latestCandidateScore] = await Promise.all([
+      query<{
       id: string;
       candidate_id: string;
       latest_application_id: string | null;
@@ -469,7 +514,9 @@ export class HrRepository {
     }>(
       "SELECT * FROM candidate_insights WHERE candidate_id = $1 LIMIT 1",
       [candidateId]
-    );
+    ),
+      candidateScoresRepository.findLatestByCandidateId(candidateId)
+    ]);
 
     const interviewRows = await query<{
       id: string;
@@ -492,6 +539,34 @@ export class HrRepository {
         INNER JOIN applications ON applications.id = interview_sessions.application_id
         WHERE applications.candidate_id = $1
         ORDER BY interview_sessions.created_at DESC
+      `,
+      [candidateId]
+    );
+
+    const screeningResultRows = await query<{
+      id: string;
+      application_id: string;
+      candidate_id: string;
+      job_id: string;
+      semantic_similarity: string;
+      experience_match: string;
+      skills_match: string;
+      domain_match: string;
+      achievements_match: string;
+      final_score: string;
+      resume_analysis: Record<string, unknown> | null;
+      job_analysis: Record<string, unknown> | null;
+      reasoning_summary: string | null;
+      strengths: string[] | null;
+      weaknesses: string[] | null;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        SELECT screening_results.*
+        FROM screening_results
+        WHERE screening_results.candidate_id = $1
+        ORDER BY screening_results.created_at DESC
       `,
       [candidateId]
     );
@@ -539,13 +614,15 @@ export class HrRepository {
               jobTitle: item.jobTitle,
               status: item.status,
               appliedAt: item.appliedAt
-            }))
+            })),
+            latestCandidateScore
           )
         : null,
       applications,
       interviews: interviewRows.rows.map((row) =>
         normalizeInterviewSession(row, itemsBySession.get(row.id) ?? [])
-      )
+      ),
+      screeningResults: screeningResultRows.rows.map(normalizeScreeningResult)
     };
   }
 

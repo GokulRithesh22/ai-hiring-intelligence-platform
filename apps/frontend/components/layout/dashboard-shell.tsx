@@ -10,9 +10,9 @@ const navigation = [
     description: "Landing page and product narrative"
   },
   {
-    href: "/manager/jobs/create",
+    href: "/manager/dashboard",
     label: "Manager Job Flow",
-    description: "AI intake and JD generation"
+    description: "Protected manager workspace"
   },
   {
     href: "/hr/dashboard",
@@ -96,7 +96,7 @@ export function DashboardShell({
           </div>
 
           <div className="shell-actions">
-            <Link className="button button-secondary" href="/manager/jobs/create">
+            <Link className="button button-secondary" href="/manager/dashboard">
               New job request
             </Link>
             <Link className="button button-primary" href="/hr/dashboard">

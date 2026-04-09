@@ -17,7 +17,7 @@ export function LandingPage({ content, actions }: LandingPageProps) {
           </Link>
 
           <div className="landing-links">
-            <Link className="button button-ghost" href="/manager/jobs/create">
+            <Link className="button button-ghost" href="/manager/dashboard">
               Manager flow
             </Link>
             <Link className="button button-ghost" href="/hr/dashboard">

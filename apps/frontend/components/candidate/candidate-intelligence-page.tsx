@@ -121,6 +121,55 @@ export function CandidateIntelligencePage({
           <section className="question-panel card stack-lg">
             <div className="panel-heading">
               <div>
+                <span className="subtle-label">Evaluation engine</span>
+                <h2>Weighted candidate score and confidence</h2>
+              </div>
+            </div>
+
+            <div className="score-grid">
+              <article className="score-card">
+                <strong>{profile.scoreEngine.finalScore}</strong>
+                <span className="muted">Final score</span>
+              </article>
+              <article className="score-card">
+                <strong>{profile.scoreEngine.confidence}</strong>
+                <span className="muted">Confidence</span>
+              </article>
+              <article className="score-card">
+                <strong>{profile.scoreEngine.roleCapability}</strong>
+                <span className="muted">Role capability</span>
+              </article>
+              <article className="score-card">
+                <strong>{profile.scoreEngine.thinkingBehavior}</strong>
+                <span className="muted">Thinking & behavior</span>
+              </article>
+              <article className="score-card">
+                <strong>{profile.scoreEngine.impact}</strong>
+                <span className="muted">Impact</span>
+              </article>
+              <article className="score-card">
+                <strong>{profile.scoreEngine.transferability}</strong>
+                <span className="muted">Transferability</span>
+              </article>
+              <article className="score-card">
+                <strong>{profile.scoreEngine.potential}</strong>
+                <span className="muted">Potential</span>
+              </article>
+            </div>
+
+            <div className="summary-chip">
+              <span className="subtle-label">Evidence layer</span>
+              <span className="muted">
+                {profile.scoreEngine.evidence.length > 0
+                  ? profile.scoreEngine.evidence.join(" | ")
+                  : "Evidence will appear once scoring signals are stored."}
+              </span>
+            </div>
+          </section>
+
+          <section className="question-panel card stack-lg">
+            <div className="panel-heading">
+              <div>
                 <span className="subtle-label">Interview scores</span>
                 <h2>Communication, knowledge, and confidence</h2>
               </div>

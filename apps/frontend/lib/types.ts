@@ -64,6 +64,91 @@ export type GeneratedJobDescription = {
   hrSummary: string;
 };
 
+export type ManagerCreationMode = "conversational" | "structured";
+
+export type ManagerJdFeedbackAction =
+  | "TOO_GENERIC"
+  | "TOO_COMPLEX"
+  | "IMPROVE_RESPONSIBILITIES"
+  | "MAKE_MORE_OUTCOME_FOCUSED";
+
+export type ManagerDashboardMetric = {
+  label: string;
+  value: string;
+  context: string;
+};
+
+export type ManagerPipelineDistribution = {
+  label: string;
+  count: number;
+  status: string;
+};
+
+export type ManagerJobCardData = {
+  id: string;
+  title: string;
+  status: string;
+  location: string;
+  createdAt: string;
+  updatedAt: string;
+  descriptionPreview: string;
+  applicantsCount: number;
+  shortlistedCount: number;
+  pipelineDistribution: ManagerPipelineDistribution[];
+};
+
+export type ManagerDashboardData = {
+  metrics: ManagerDashboardMetric[];
+  jobs: ManagerJobCardData[];
+};
+
+export type ManagerJobDescriptionVariant = {
+  id: string;
+  label: string;
+  tone: string;
+  summary: string;
+  description: string;
+  responsibilities: string[];
+  focusAreas: string[];
+  feedbackApplied: ManagerJdFeedbackAction[];
+};
+
+export type ManagerJobDraftPayload = {
+  mode: ManagerCreationMode;
+  jobTitle: string;
+  department?: string;
+  location?: string;
+  experienceLevel?: string;
+  salaryRange?: string;
+  joiningTimeline?: string;
+  relocation?: string;
+  answers: Record<string, string>;
+};
+
+export type ManagerJobDraftResult = {
+  jobId: string | null;
+  jobTitle: string;
+  selectedVariantId: string;
+  variants: ManagerJobDescriptionVariant[];
+};
+
+export type ManagerCandidateIntelligenceEntry = {
+  applicationId: string;
+  candidateId: string;
+  candidateName: string;
+  currentCompany: string | null;
+  currentTitle: string | null;
+  status: string;
+  resumeScore: number | null;
+  interviewScore: number | null;
+  insightSummary: string;
+};
+
+export type ManagerJobIntelligenceDetail = {
+  job: ManagerJobCardData;
+  candidates: ManagerCandidateIntelligenceEntry[];
+};
+
 export type DashboardStat = {
   label: string;
   value: string;
@@ -182,6 +267,19 @@ export type HrCandidateDetail = {
     claimVerificationFlags: Array<Record<string, unknown>>;
     suggestedManagerQuestions: string[];
     hiringRecommendation: string | null;
+    candidateScore?: {
+      finalScore: number;
+      confidenceScore: number;
+      confidenceLabel: string;
+      summary: string | null;
+      recommendation: string | null;
+      roleCapability: number;
+      thinkingBehavior: number;
+      impact: number;
+      transferability: number;
+      potential: number;
+      evidenceSummary: string[];
+    } | null;
   } | null;
   applications: Array<{
     applicationId: string;
@@ -207,6 +305,23 @@ export type HrCandidateDetail = {
       answer: string;
       evaluationScore: number;
     }>;
+  }>;
+  screeningResults: Array<{
+    id: string;
+    applicationId: string;
+    candidateId: string;
+    jobId: string;
+    semanticSimilarity: number;
+    experienceMatch: number;
+    skillsMatch: number;
+    domainMatch: number;
+    achievementsMatch: number;
+    finalScore: number;
+    resumeAnalysis: Record<string, unknown>;
+    jobAnalysis: Record<string, unknown>;
+    reasoningSummary: string | null;
+    strengths: string[];
+    weaknesses: string[];
   }>;
 };
 
@@ -246,20 +361,21 @@ export type CandidateApplicationPayload = {
   jobId: string;
   fullName: string;
   email: string;
-  linkedInUrl: string;
-  resumeFileName: string;
-  joiningTimeline: string;
-  salaryExpectation: string;
+  phone?: string;
+  linkedInUrl?: string;
+  resumeFile: File | null;
+  earliestJoiningDate: string;
+  expectedCtc: string;
   relocation: string;
 };
 
-export type ScreeningResult = {
-  resumeScore: number;
-  resumeAssessment: string;
-  qualificationResult: string;
-  qualificationReason: string;
-  nextStep: string;
+export type ApplicationSubmissionResult = {
+  applicationId: string;
+  candidateId: string;
+  status: "qualified" | "rejected";
   statusMessage: string;
+  interviewInvitation: string | null;
+  interviewSessionId?: string | null;
   interviewQuestions: string[];
 };
 
@@ -275,7 +391,46 @@ export type VoiceTranscriptionResult = {
   languageCode: string | null;
 };
 
+export type VoiceInterviewCategory =
+  | "experience_validation"
+  | "skill_depth_validation"
+  | "problem_solving_scenario"
+  | "role_simulation"
+  | "behavioral_question";
+
+export type VoiceResponseScoreBreakdown = {
+  communicationClarity: number;
+  technicalDepth: number;
+  problemSolvingStructure: number;
+  businessUnderstanding: number;
+};
+
+export type VoiceInterviewTurn = {
+  id: string;
+  role: "assistant" | "candidate";
+  kind: "greeting" | "question" | "follow_up" | "response" | "closing";
+  text: string;
+  category?: VoiceInterviewCategory | null;
+  linkedQuestionId?: string | null;
+  scores?: VoiceResponseScoreBreakdown | null;
+  createdAt: string;
+};
+
 export type VoiceInterviewEvaluation = {
+  communicationClarity: number;
+  technicalDepth: number;
+  problemSolvingStructure: number;
+  businessUnderstanding: number;
+  responseEvaluations: Array<{
+    questionId: string;
+    question: string;
+    answer: string;
+    category: VoiceInterviewCategory;
+    askedAsFollowUp: boolean;
+    evaluationScore: number;
+    rationale: string;
+    scoreBreakdown: VoiceResponseScoreBreakdown;
+  }>;
   communicationScore: number;
   knowledgeScore: number;
   confidenceScore: number;
@@ -283,6 +438,31 @@ export type VoiceInterviewEvaluation = {
   summary: string;
   claimVerificationFlags: Array<{ claim: string; status: string }>;
   suggestedManagerQuestions: string[];
+};
+
+export type StartVoiceInterviewConversationInput = {
+  questions?: string[];
+  interviewSessionId?: string | null;
+  applicationId?: string | null;
+};
+
+export type SubmitVoiceInterviewTurnInput = {
+  conversationId: string;
+  transcript?: string;
+  audioBase64?: string;
+  mimeType?: string;
+  fileName?: string;
+};
+
+export type VoiceInterviewConversationState = {
+  conversationId: string;
+  interviewSessionId: string | null;
+  completed: boolean;
+  status: string;
+  currentPrompt: string | null;
+  turns: VoiceInterviewTurn[];
+  latestTranscript: string | null;
+  evaluation: VoiceInterviewEvaluation | null;
 };
 
 export type CandidateProfileApplication = {
@@ -315,6 +495,16 @@ export type CandidateProfileData = {
   interviewTranscript: CandidateTranscriptItem[];
   claimVerification: string;
   suggestedQuestions: string[];
+  scoreEngine: {
+    finalScore: string;
+    confidence: string;
+    roleCapability: string;
+    thinkingBehavior: string;
+    impact: string;
+    transferability: string;
+    potential: string;
+    evidence: string[];
+  };
   scoreBreakdown: {
     communication: string;
     knowledge: string;
