@@ -16,6 +16,20 @@ import { ApiError } from "../../lib/http";
 import { semanticScreeningService } from "../applications/semantic-screening.service";
 import { jobsRepository } from "./jobs.repository";
 
+type UpdateJobInput = {
+  title?: string;
+  department?: string | null;
+  location?: string | null;
+  employmentType?: CreateJobInput["employmentType"];
+  minExperienceYears?: number | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  currency?: string | null;
+  joiningTimeline?: string | null;
+  relocationRequired?: boolean;
+  generatedDescription?: string | null;
+};
+
 export class JobsService {
   async listJobs() {
     return jobsRepository.list();
@@ -72,7 +86,7 @@ export class JobsService {
 
   async updateJob(
     jobId: string,
-    input: Partial<CreateJobInput> & { generatedDescription?: string | null }
+    input: UpdateJobInput
   ) {
     const job = await jobsRepository.update(jobId, {
       title: input.title,
