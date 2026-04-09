@@ -1,6 +1,6 @@
 import type { ModelProfile, ReasoningEffort } from "../providers/types.js";
 
-export type ProviderMode = "auto" | "openai" | "mock";
+export type ProviderMode = "auto" | "openai" | "openrouter" | "mock";
 
 export interface AiServiceConfig {
   provider: ProviderMode;
@@ -8,6 +8,8 @@ export interface AiServiceConfig {
   openAiBaseUrl?: string;
   openAiOrganization?: string;
   openAiProject?: string;
+  appBaseUrl?: string;
+  appTitle?: string;
   models: Record<ModelProfile, string>;
   reasoningEffort: ReasoningEffort;
   enableMockFallback: boolean;
@@ -28,12 +30,14 @@ export function loadAiServiceConfig(env: NodeJS.ProcessEnv = process.env): AiSer
     ...(env.OPENAI_API_KEY ? { openAiApiKey: env.OPENAI_API_KEY } : {}),
     ...(env.OPENAI_BASE_URL ? { openAiBaseUrl: env.OPENAI_BASE_URL } : {}),
     ...(env.OPENAI_ORGANIZATION ? { openAiOrganization: env.OPENAI_ORGANIZATION } : {}),
-    ...(env.OPENAI_PROJECT ? { openAiProject: env.OPENAI_PROJECT } : {})
+    ...(env.OPENAI_PROJECT ? { openAiProject: env.OPENAI_PROJECT } : {}),
+    ...(env.APP_BASE_URL ? { appBaseUrl: env.APP_BASE_URL } : {}),
+    ...(env.APP_TITLE ? { appTitle: env.APP_TITLE } : {})
   };
 }
 
 function parseProvider(value: string | undefined): ProviderMode {
-  if (value === "openai" || value === "mock" || value === "auto") {
+  if (value === "openai" || value === "openrouter" || value === "mock" || value === "auto") {
     return value;
   }
 

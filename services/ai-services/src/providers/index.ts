@@ -29,6 +29,10 @@ export function createStructuredAiProvider(config: AiServiceConfig): StructuredA
     return new OpenAiStructuredProvider(config);
   }
 
+  if (config.provider === "openrouter") {
+    return new OpenAiStructuredProvider(config);
+  }
+
   if (!config.openAiApiKey) {
     return mockProvider;
   }

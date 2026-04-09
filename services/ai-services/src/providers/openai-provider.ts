@@ -8,14 +8,18 @@ export class OpenAiStructuredProvider implements StructuredAiProvider {
 
   constructor(private readonly config: AiServiceConfig) {
     if (!config.openAiApiKey) {
-      throw new Error("OPENAI_API_KEY is required when AI_PROVIDER=openai.");
+      throw new Error("OPENAI_API_KEY is required when AI_PROVIDER=openai or AI_PROVIDER=openrouter.");
     }
 
     this.client = new OpenAI({
       apiKey: config.openAiApiKey,
       ...(config.openAiBaseUrl ? { baseURL: config.openAiBaseUrl } : {}),
       ...(config.openAiOrganization ? { organization: config.openAiOrganization } : {}),
-      ...(config.openAiProject ? { project: config.openAiProject } : {})
+      ...(config.openAiProject ? { project: config.openAiProject } : {}),
+      defaultHeaders: {
+        ...(config.appTitle ? { "X-Title": config.appTitle } : {}),
+        ...(config.appBaseUrl ? { "HTTP-Referer": config.appBaseUrl } : {})
+      }
     });
   }
 

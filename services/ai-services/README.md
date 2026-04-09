@@ -13,6 +13,7 @@ AI service layer for the hiring platform monorepo. This package owns:
 ## Runtime modes
 
 - `AI_PROVIDER=openai`: use OpenAI Responses API with structured outputs
+- `AI_PROVIDER=openrouter`: use an OpenAI-compatible provider such as OpenRouter for text-based AI tasks
 - `AI_PROVIDER=mock`: use deterministic local mocks for offline development
 - `AI_PROVIDER=auto`: use OpenAI when `OPENAI_API_KEY` exists, otherwise fall back to mock
 
@@ -55,3 +56,21 @@ const draft = await service.generateJobDescription({
 ## OpenAI integration
 
 The OpenAI provider uses the official Node SDK Responses API with structured outputs. Models are environment-configurable so the backend can route high-volume tasks to a faster model and final reports to a higher-capability model.
+
+## OpenRouter usage
+
+For OpenRouter-backed text features, set:
+
+- `AI_PROVIDER=openrouter`
+- `OPENAI_API_KEY=<your openrouter key>`
+- `OPENAI_BASE_URL=https://openrouter.ai/api/v1`
+- `AI_MODEL_PRIMARY=<openrouter model id>`
+- `AI_MODEL_FAST=<openrouter model id>`
+- `AI_MODEL_EXTRACTION=<openrouter model id>`
+
+Optional but recommended:
+
+- `APP_BASE_URL=<your frontend url>`
+- `APP_TITLE=AI Hiring Intelligence Platform`
+
+Use direct OpenAI later for Realtime voice features.
