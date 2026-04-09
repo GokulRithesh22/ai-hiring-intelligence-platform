@@ -2,7 +2,7 @@ import type { StructuredAiProvider, StructuredAiRequest, StructuredAiResponse } 
 
 export class MockStructuredAiProvider implements StructuredAiProvider {
   async generateObject<T>(request: StructuredAiRequest<T>): Promise<StructuredAiResponse<T>> {
-    const data = request.outputSchema.parse(request.mockFactory());
+    const data = request.mockFactory();
 
     return {
       data,
