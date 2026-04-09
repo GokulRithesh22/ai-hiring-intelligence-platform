@@ -5,7 +5,8 @@ import {
   defaultGeneratedJobDescription,
   hrDashboardData,
   jobIntakeQuestions,
-  landingContent
+  landingContent,
+  publicJobCards
 } from "@/lib/mock-data";
 import type {
   ApplicationSubmissionResult,
@@ -20,6 +21,7 @@ import type {
   JobIntakePayload,
   JobIntakeQuestion,
   LandingContent,
+  PublicJobCard,
   ManagerCandidateIntelligenceEntry,
   ManagerDashboardData,
   ManagerJdFeedbackAction,
@@ -665,6 +667,40 @@ export async function getLandingContent(): Promise<LandingContent> {
     await sleep(120);
     return landingContent;
   });
+}
+
+export async function getPublicJobs(): Promise<PublicJobCard[]> {
+  return requestOrFallback<{
+    items: Array<{
+      id: string;
+      title: string;
+      location: string | null;
+      minExperienceYears: number | null;
+      generatedDescription: string;
+      approvedDescription: string | null;
+    }>;
+  }>("/public/jobs", undefined, async () => {
+    await sleep(120);
+    return {
+      items: publicJobCards.map((job) => ({
+        id: job.id,
+        title: job.title,
+        location: job.location,
+        minExperienceYears: Number(job.experienceLevel.split("-")[0]) || null,
+        generatedDescription: job.summary,
+        approvedDescription: null
+      }))
+    };
+  }).then((payload) =>
+    payload.items.map((job) => ({
+      id: job.id,
+      slug: slugifyJob(job.title),
+      title: job.title,
+      location: job.location ?? "Remote / flexible",
+      experienceLevel: job.minExperienceYears ? `${job.minExperienceYears}+ years` : "Open experience",
+      summary: job.approvedDescription ?? job.generatedDescription ?? "Explore the full role description."
+    }))
+  );
 }
 
 export async function getJobIntakeQuestions(): Promise<JobIntakeQuestion[]> {
@@ -1372,6 +1408,14 @@ export async function submitCandidateApplication(
     };
     return fallbackResult;
   }
+}
+
+function slugifyJob(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 export async function getCandidateProfile(

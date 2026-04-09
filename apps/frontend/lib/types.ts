@@ -36,6 +36,15 @@ export type LandingContent = {
   productViews: LandingView[];
 };
 
+export type PublicJobCard = {
+  id: string;
+  slug: string;
+  title: string;
+  location: string;
+  experienceLevel: string;
+  summary: string;
+};
+
 export type JobIntakeQuestion = {
   id: string;
   label: string;

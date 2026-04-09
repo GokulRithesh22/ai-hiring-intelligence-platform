@@ -1,4 +1,3 @@
-import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { CandidateApplicationPortal } from "@/components/candidate/candidate-application-portal";
 import { getApplicationPortal } from "@/lib/api-adapters";
 
@@ -13,12 +12,10 @@ export default async function ApplyPage({ params }: ApplyPageProps) {
   const portal = await getApplicationPortal(jobId);
 
   return (
-    <DashboardShell
-      eyebrow="Candidate Experience"
-      title={portal.job.title}
-      description="Resume upload, qualification screening, and AI interview progression live on a single branded application surface."
-    >
-      <CandidateApplicationPortal portal={portal} />
-    </DashboardShell>
+    <div className="landing">
+      <div className="page-shell">
+        <CandidateApplicationPortal portal={portal} />
+      </div>
+    </div>
   );
 }

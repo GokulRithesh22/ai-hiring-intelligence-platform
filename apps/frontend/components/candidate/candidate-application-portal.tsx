@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import { submitCandidateApplication } from "@/lib/api-adapters";
 import { VoiceInterviewPanel } from "@/components/candidate/voice-interview-panel";
 import type {
@@ -18,19 +19,28 @@ export function CandidateApplicationPortal({
 }: CandidateApplicationPortalProps) {
   const [form, setForm] = useState<CandidateApplicationPayload>({
     jobId: portal.job.id,
-    fullName: "Aarav Mehta",
-    email: "aarav.mehta@example.com",
-    phone: "+91 9876543210",
+    fullName: "",
+    email: "",
+    phone: "",
     linkedInUrl: "",
     resumeFile: null,
-    earliestJoiningDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
-      .toISOString()
-      .slice(0, 10),
-    expectedCtc: "2800000",
-    relocation: "Open"
+    earliestJoiningDate: "",
+    expectedCtc: "",
+    relocation: ""
   });
   const [result, setResult] = useState<ApplicationSubmissionResult | null>(null);
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const isFormComplete =
+    form.fullName.trim().length > 1 &&
+    form.email.trim().length > 3 &&
+    (form.phone?.trim().length ?? 0) > 3 &&
+    (form.linkedInUrl?.trim().length ?? 0) > 3 &&
+    form.earliestJoiningDate.trim().length > 0 &&
+    form.expectedCtc.trim().length > 0 &&
+    form.relocation.trim().length > 0 &&
+    form.resumeFile !== null;
 
   const updateField = <K extends keyof CandidateApplicationPayload>(
     field: K,
@@ -43,9 +53,12 @@ export function CandidateApplicationPortal({
   };
 
   const handleSubmit = () => {
-    if (!form.resumeFile) {
+    if (!isFormComplete) {
+      setValidationMessage("Complete every required field before continuing.");
       return;
     }
+
+    setValidationMessage(null);
 
     startTransition(async () => {
       const response = await submitCandidateApplication(form);
@@ -56,7 +69,17 @@ export function CandidateApplicationPortal({
   return (
     <div className="candidate-layout">
       <section className="form-section card stack-lg">
-        <div className="panel-heading">
+        <div className="landing-nav surface" style={{ marginBottom: 0 }}>
+          <Link className="brand" href="/">
+            <span className="brand-mark">AI</span>
+            <span>Hiring Intelligence</span>
+          </Link>
+          <Link className="button button-secondary" href="/">
+            Back to jobs
+          </Link>
+        </div>
+
+        <div className="panel-heading" style={{ marginTop: 18 }}>
           <div>
             <span className="subtle-label">Open role</span>
             <h2>{portal.job.title}</h2>
@@ -65,41 +88,17 @@ export function CandidateApplicationPortal({
           <span className="status-pill status-active">{portal.job.location}</span>
         </div>
 
-        <div className="summary-grid">
+        <div className="summary-grid" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
           <article>
             <span className="subtle-label">Experience</span>
             <strong>{portal.job.experienceLevel}</strong>
             <span className="muted">Preferred profile</span>
           </article>
           <article>
-            <span className="subtle-label">Compensation</span>
-            <strong>{portal.job.salaryRange}</strong>
-            <span className="muted">Approved range</span>
+            <span className="subtle-label">Location</span>
+            <strong>{portal.job.location}</strong>
+            <span className="muted">Current opening</span>
           </article>
-          <article>
-            <span className="subtle-label">Join by</span>
-            <strong>{portal.job.joiningTimeline}</strong>
-            <span className="muted">Target start date</span>
-          </article>
-          <article>
-            <span className="subtle-label">Relocation</span>
-            <strong>{portal.job.relocation}</strong>
-            <span className="muted">Constraint</span>
-          </article>
-        </div>
-
-        <div className="pipeline-list">
-          {portal.pipeline.map((step) => (
-            <article className="pipeline-item" key={step.title}>
-              <div className="panel-heading">
-                <div>
-                  <strong>{step.title}</strong>
-                  <p className="muted">{step.description}</p>
-                </div>
-                <span className={`status-pill ${step.statusClass}`}>{step.status}</span>
-              </div>
-            </article>
-          ))}
         </div>
       </section>
 
@@ -118,6 +117,8 @@ export function CandidateApplicationPortal({
           <label className="field">
             <span>Full name</span>
             <input
+              required
+              placeholder="Enter your full name"
               value={form.fullName}
               onChange={(event) => updateField("fullName", event.target.value)}
             />
@@ -126,6 +127,8 @@ export function CandidateApplicationPortal({
             <span>Email</span>
             <input
               type="email"
+              required
+              placeholder="Enter your email"
               value={form.email}
               onChange={(event) => updateField("email", event.target.value)}
             />
@@ -133,6 +136,8 @@ export function CandidateApplicationPortal({
           <label className="field">
             <span>Phone</span>
             <input
+              required
+              placeholder="Enter your phone number"
               value={form.phone ?? ""}
               onChange={(event) => updateField("phone", event.target.value)}
             />
@@ -141,7 +146,8 @@ export function CandidateApplicationPortal({
             <span>LinkedIn URL</span>
             <input
               type="url"
-              placeholder="Optional LinkedIn profile URL"
+              required
+              placeholder="https://linkedin.com/in/username"
               value={form.linkedInUrl ?? ""}
               onChange={(event) => updateField("linkedInUrl", event.target.value)}
             />
@@ -150,6 +156,7 @@ export function CandidateApplicationPortal({
             <span>Earliest joining date</span>
             <input
               type="date"
+              required
               value={form.earliestJoiningDate}
               onChange={(event) => updateField("earliestJoiningDate", event.target.value)}
             />
@@ -157,6 +164,8 @@ export function CandidateApplicationPortal({
           <label className="field">
             <span>Expected CTC</span>
             <input
+              required
+              placeholder="Enter expected CTC"
               value={form.expectedCtc}
               onChange={(event) => updateField("expectedCtc", event.target.value)}
             />
@@ -164,9 +173,11 @@ export function CandidateApplicationPortal({
           <label className="field">
             <span>Relocation willingness</span>
             <select
+              required
               value={form.relocation}
               onChange={(event) => updateField("relocation", event.target.value)}
             >
+              <option value="">Select an option</option>
               <option value="Open">Open</option>
               <option value="Not needed">Not needed</option>
               <option value="Declined">Declined</option>
@@ -182,6 +193,7 @@ export function CandidateApplicationPortal({
           <input
             type="file"
             accept=".pdf,.docx,.txt"
+            required
             onChange={(event) =>
               updateField("resumeFile", event.target.files?.[0] ?? null)
             }
@@ -196,12 +208,13 @@ export function CandidateApplicationPortal({
             className="button button-primary"
             type="button"
             onClick={handleSubmit}
-            disabled={isPending || !form.resumeFile}
+            disabled={isPending || !isFormComplete}
           >
             {isPending ? "Running screening..." : "Submit application"}
           </button>
-          <span className="muted">Your resume is analyzed against the role requirements.</span>
         </div>
+
+        {validationMessage ? <p className="muted">{validationMessage}</p> : null}
 
         {!result ? null : (
           <div className="stack">
@@ -222,15 +235,6 @@ export function CandidateApplicationPortal({
                   "We have stored your application and will email you if the next stage opens."}
               </p>
             </article>
-
-            <div className="question-list">
-              {result.interviewQuestions.map((question, index) => (
-                <article className="question-item" key={question}>
-                  <strong>Question {index + 1}</strong>
-                  <p className="muted">{question}</p>
-                </article>
-              ))}
-            </div>
 
             {result.interviewQuestions.length === 0 ? null : (
               <VoiceInterviewPanel

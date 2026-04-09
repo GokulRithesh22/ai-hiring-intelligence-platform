@@ -223,6 +223,16 @@ button {
   margin-top: 24px;
 }
 
+.jobs-hero {
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  margin-bottom: 28px;
+  background:
+    radial-gradient(circle at top right, rgba(54, 198, 160, 0.16), transparent 32%),
+    linear-gradient(135deg, rgba(74, 108, 247, 0.08), rgba(255, 255, 255, 0.92));
+  border: 1px solid var(--color-border);
+}
+
 .hero-metrics,
 .stats-grid,
 .summary-grid,
@@ -318,6 +328,12 @@ button {
   gap: 18px;
 }
 
+.job-board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
 .feature-grid {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
@@ -335,6 +351,53 @@ button {
 .showcase-grid article {
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid rgba(230, 234, 242, 0.92);
+}
+
+.job-board-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 220px;
+  padding: 22px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--shadow-card);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.job-board-card:hover {
+  transform: scale(1.03);
+  border-color: rgba(74, 108, 247, 0.22);
+  box-shadow: 0 28px 60px rgba(31, 43, 74, 0.12);
+}
+
+.job-board-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.job-board-preview {
+  max-width: 32ch;
+}
+
+.job-board-overlay {
+  position: absolute;
+  inset: auto 16px 16px 16px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: rgba(248, 250, 255, 0.96);
+  border: 1px solid rgba(74, 108, 247, 0.14);
+  transform: translateY(calc(100% - 42px));
+  transition: transform 180ms ease;
+}
+
+.job-board-card:hover .job-board-overlay {
+  transform: translateY(0);
 }
 
 .kicker,
@@ -716,6 +779,7 @@ th {
   .transcript-grid,
   .feature-grid,
   .workflow-grid,
+  .job-board-grid,
   .showcase-grid,
   .summary-grid,
   .stats-grid {
@@ -770,6 +834,7 @@ th {
   .field-grid,
   .filters-grid,
   .form-grid,
+  .job-board-grid,
   .overview-grid,
   .insight-grid,
   .score-grid {

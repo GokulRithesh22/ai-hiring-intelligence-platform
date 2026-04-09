@@ -7,6 +7,7 @@ import type {
   HrDashboardData,
   JobIntakeQuestion,
   LandingContent,
+  PublicJobCard,
 } from "@/lib/types";
 
 export const landingContent: LandingContent = {
@@ -107,6 +108,36 @@ export const landingContent: LandingContent = {
     }
   ]
 };
+
+export const publicJobCards: PublicJobCard[] = [
+  {
+    id: "growth-marketing-manager",
+    slug: "growth-marketing-manager",
+    title: "Growth Marketing Manager",
+    location: "Bengaluru hybrid",
+    experienceLevel: "6-8 years",
+    summary:
+      "Own experimentation across paid acquisition, lifecycle automation, and attribution systems to improve efficient revenue growth for a SaaS business."
+  },
+  {
+    id: "product-marketing-lead",
+    slug: "product-marketing-lead",
+    title: "Product Marketing Lead",
+    location: "Remote India",
+    experienceLevel: "5-7 years",
+    summary:
+      "Shape positioning, launch strategy, and customer proof points for a fast-moving B2B product line with close GTM collaboration."
+  },
+  {
+    id: "customer-success-strategist",
+    slug: "customer-success-strategist",
+    title: "Customer Success Strategist",
+    location: "Bengaluru hybrid",
+    experienceLevel: "4-6 years",
+    summary:
+      "Drive retention, expansion, and executive relationships while turning product usage data into proactive account plans."
+  }
+];
 
 export const jobIntakeQuestions: JobIntakeQuestion[] = [
   {
@@ -212,29 +243,7 @@ export const applicationPortalData: ApplicationPortalData = {
     relocation: "Preferred for Bengaluru hybrid",
     location: "Bengaluru hybrid"
   },
-  pipeline: [
-    {
-      title: "Resume matching",
-      description:
-        "AI compares the uploaded resume against the generated job description and scores skill, trajectory, and scope fit.",
-      status: "Required",
-      statusClass: "status-active"
-    },
-    {
-      title: "Qualification questions",
-      description:
-        "Joining timeline, salary expectation, and relocation answers are checked against approved constraints before advancing.",
-      status: "Required",
-      statusClass: "status-active"
-    },
-    {
-      title: "AI interview",
-      description:
-        "Qualified applicants receive 4-6 tailored AI interview questions derived from the resume and role requirements.",
-      status: "Unlocked after screening",
-      statusClass: "status-pending"
-    }
-  ]
+  pipeline: []
 };
 
 export const screeningResult: ApplicationSubmissionResult = {
