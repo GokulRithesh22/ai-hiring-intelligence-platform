@@ -1,10 +1,20 @@
 import Link from "next/link";
 
 import { ManagerShell } from "@/components/manager/manager-shell";
+import { getProtectedManagerDashboard } from "@/lib/manager-api";
 import { requireManagerSession } from "@/lib/manager-auth";
+
+function formatStatus(status: string) {
+  return status
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 export default async function ManagerCandidatesPage() {
   await requireManagerSession("/manager/candidates");
+  const data = await getProtectedManagerDashboard();
 
   return (
     <ManagerShell
@@ -26,8 +36,8 @@ export default async function ManagerCandidatesPage() {
           </div>
 
           <div className="shell-actions">
-            <Link className="button button-primary" href="/manager/dashboard">
-              Open manager dashboard
+            <Link className="button button-primary" href="/manager/jobs">
+              Open job board
             </Link>
             <Link className="button button-secondary" href="/manager/jobs/create">
               Create new JD
@@ -51,6 +61,68 @@ export default async function ManagerCandidatesPage() {
             <span className="stat-value">Resume + interview</span>
             <span className="muted">Structured scoring, transcript evidence, and AI notes.</span>
           </article>
+        </section>
+
+        <section className="stack-lg">
+          <div className="panel-heading">
+            <div>
+              <span className="subtle-label">Multi-JD routing</span>
+              <h2>Open candidate intelligence by active job description</h2>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gap: 18,
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))"
+            }}
+          >
+            {data.jobs.map((job) => (
+              <article className="card stack" key={job.id} style={{ padding: 22 }}>
+                <div className="panel-heading">
+                  <div>
+                    <span className="status-pill status-progress">{formatStatus(job.status)}</span>
+                    <h3 style={{ margin: "12px 0 6px" }}>{job.title}</h3>
+                    <p className="muted" style={{ margin: 0 }}>
+                      {job.location}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="summary-grid" style={{ gridTemplateColumns: "repeat(2, minmax(0, 1fr))" }}>
+                  <article className="summary-chip">
+                    <span className="subtle-label">Applicants</span>
+                    <strong>{job.applicantsCount}</strong>
+                  </article>
+                  <article className="summary-chip">
+                    <span className="subtle-label">Shortlisted</span>
+                    <strong>{job.shortlistedCount}</strong>
+                  </article>
+                </div>
+
+                <div className="summary-chip">
+                  <span className="subtle-label">Pipeline distribution</span>
+                  <span className="muted">
+                    {job.pipelineDistribution
+                      .filter((stage) => stage.count > 0)
+                      .slice(0, 4)
+                      .map((stage) => `${stage.label}: ${stage.count}`)
+                      .join(" | ")}
+                  </span>
+                </div>
+
+                <div className="shell-actions">
+                  <Link className="button button-primary" href={`/manager/jobs/${job.id}`}>
+                    Open pipeline
+                  </Link>
+                  <Link className="button button-secondary" href={`/manager/dashboard/${job.id}`}>
+                    Dashboard entry
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
         </section>
       </div>
     </ManagerShell>

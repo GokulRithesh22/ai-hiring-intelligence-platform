@@ -308,6 +308,8 @@ export function scoreCandidate(input: CandidateScoringInput): CandidateScoringRe
   ]);
   const signalStrength = average([finalScore / 100, screening.finalScore / 100, (interview?.overallScore ?? finalScore) / 100]);
   const confidenceScore = clampConfidence(coverage * 0.4 + consistency * 0.35 + signalStrength * 0.25);
+  const confidenceLabel =
+    confidenceScore >= 0.8 ? "HIGH" : confidenceScore >= 0.6 ? "MEDIUM" : "LOW";
   const confidenceInterpretation =
     confidenceScore >= 0.8
       ? "High confidence: resume and interview signals are strong and consistent."
@@ -355,6 +357,7 @@ export function scoreCandidate(input: CandidateScoringInput): CandidateScoringRe
     potential,
     finalScore,
     confidenceScore,
+    confidenceLabel,
     confidenceInterpretation,
     summary: `${validated.jobTitle} score ${finalScore}. Strongest signal: ${strongestComponent?.[0] ?? "overall alignment"} (${strongestComponent?.[1] ?? finalScore}). Lowest signal: ${weakestComponent?.[0] ?? "none"} (${weakestComponent?.[1] ?? finalScore}). ${methodology}`,
     recommendation,

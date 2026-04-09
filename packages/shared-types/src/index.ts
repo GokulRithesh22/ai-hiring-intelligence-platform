@@ -325,6 +325,8 @@ export interface HrJobApplicationItem {
   candidateEmail: string;
   resumeScore: number | null;
   interviewScore: number | null;
+  candidateScore: number | null;
+  candidateScoreConfidenceLabel: string | null;
   joiningTimeline: string | null;
   salaryExpectation: number | null;
   relocation: boolean | null;
@@ -357,6 +359,8 @@ export interface HrCandidateListItem {
   latestApplicationStatus: ApplicationStatus | null;
   resumeScore: number | null;
   interviewScore: number | null;
+  candidateScore: number | null;
+  candidateScoreConfidenceLabel: string | null;
   appliedAt: string | null;
 }
 
@@ -368,6 +372,8 @@ export interface HrCandidateApplicationHistoryItem {
   appliedAt: string;
   resumeScore: number | null;
   interviewScore: number | null;
+  candidateScore: number | null;
+  candidateScoreConfidenceLabel: string | null;
 }
 
 export interface HrCandidateDetail {
@@ -622,6 +628,8 @@ export interface ManagerJobCandidateEntry {
   status: ApplicationStatus;
   resumeScore: number | null;
   interviewScore: number | null;
+  candidateScore: number | null;
+  candidateScoreConfidenceLabel: string | null;
   insightSummary: string;
 }
 

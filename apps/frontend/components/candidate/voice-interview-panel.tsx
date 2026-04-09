@@ -197,6 +197,7 @@ export function VoiceInterviewPanel({
             );
             setStatus("We couldn't process that answer. Please try again.");
           } finally {
+            setRecording(false);
             streamRef.current?.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
             recorderRef.current = null;

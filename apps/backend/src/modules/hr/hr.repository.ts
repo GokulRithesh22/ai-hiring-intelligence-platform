@@ -343,6 +343,8 @@ export class HrRepository {
       candidate_email: string;
       resume_score: string | null;
       interview_score: string | null;
+      candidate_score: string | null;
+      candidate_score_confidence_label: string | null;
       joining_timeline: string | null;
       salary_expectation: string | null;
       relocation: boolean | null;
@@ -357,6 +359,8 @@ export class HrRepository {
           candidates.email AS candidate_email,
           applications.resume_match_score AS resume_score,
           applications.interview_score AS interview_score,
+          candidate_scores.final_score AS candidate_score,
+          candidate_scores.confidence_label AS candidate_score_confidence_label,
           applications.qualification_answers->>'joiningTimeline' AS joining_timeline,
           applications.qualification_answers->>'expectedSalary' AS salary_expectation,
           CASE
@@ -368,6 +372,7 @@ export class HrRepository {
           applications.applied_at
         FROM applications
         INNER JOIN candidates ON candidates.id = applications.candidate_id
+        LEFT JOIN candidate_scores ON candidate_scores.application_id = applications.id
         WHERE applications.job_id = $1
         ORDER BY applications.applied_at DESC
       `,
@@ -381,6 +386,8 @@ export class HrRepository {
       candidateEmail: row.candidate_email,
       resumeScore: toNumber(row.resume_score),
       interviewScore: toNumber(row.interview_score),
+      candidateScore: toNumber(row.candidate_score),
+      candidateScoreConfidenceLabel: row.candidate_score_confidence_label,
       joiningTimeline: row.joining_timeline,
       salaryExpectation: toNumber(row.salary_expectation),
       relocation: row.relocation,
@@ -399,6 +406,8 @@ export class HrRepository {
       latest_status: ApplicationStatus | null;
       resume_score: string | null;
       interview_score: string | null;
+      candidate_score: string | null;
+      candidate_score_confidence_label: string | null;
       applied_at: Date | null;
     }>(
       `
@@ -411,6 +420,8 @@ export class HrRepository {
           applications.status AS latest_status,
           applications.resume_match_score AS resume_score,
           applications.interview_score AS interview_score,
+          candidate_scores.final_score AS candidate_score,
+          candidate_scores.confidence_label AS candidate_score_confidence_label,
           applications.applied_at
         FROM candidates
         LEFT JOIN LATERAL (
@@ -420,6 +431,7 @@ export class HrRepository {
           ORDER BY applications.applied_at DESC
           LIMIT 1
         ) applications ON TRUE
+        LEFT JOIN candidate_scores ON candidate_scores.application_id = applications.id
         LEFT JOIN jobs ON jobs.id = applications.job_id
         ORDER BY applications.applied_at DESC NULLS LAST, candidates.created_at DESC
       `
@@ -434,6 +446,8 @@ export class HrRepository {
       latestApplicationStatus: row.latest_status,
       resumeScore: toNumber(row.resume_score),
       interviewScore: toNumber(row.interview_score),
+      candidateScore: toNumber(row.candidate_score),
+      candidateScoreConfidenceLabel: row.candidate_score_confidence_label,
       appliedAt: row.applied_at?.toISOString() ?? null
     }));
   }
@@ -469,6 +483,8 @@ export class HrRepository {
       applied_at: Date;
       resume_score: string | null;
       interview_score: string | null;
+      candidate_score: string | null;
+      candidate_score_confidence_label: string | null;
     }>(
       `
         SELECT
@@ -478,9 +494,12 @@ export class HrRepository {
           applications.status,
           applications.applied_at,
           applications.resume_match_score AS resume_score,
-          applications.interview_score AS interview_score
+          applications.interview_score AS interview_score,
+          candidate_scores.final_score AS candidate_score,
+          candidate_scores.confidence_label AS candidate_score_confidence_label
         FROM applications
         INNER JOIN jobs ON jobs.id = applications.job_id
+        LEFT JOIN candidate_scores ON candidate_scores.application_id = applications.id
         WHERE applications.candidate_id = $1
         ORDER BY applications.applied_at DESC
       `,
@@ -494,7 +513,9 @@ export class HrRepository {
       status: row.status,
       appliedAt: row.applied_at.toISOString(),
       resumeScore: toNumber(row.resume_score),
-      interviewScore: toNumber(row.interview_score)
+      interviewScore: toNumber(row.interview_score),
+      candidateScore: toNumber(row.candidate_score),
+      candidateScoreConfidenceLabel: row.candidate_score_confidence_label
     }));
 
     const [insightResult, latestCandidateScore] = await Promise.all([

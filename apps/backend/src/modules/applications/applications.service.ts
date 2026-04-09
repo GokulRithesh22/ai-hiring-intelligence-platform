@@ -310,7 +310,7 @@ export class ApplicationsService {
       potential: scoring.potential.score,
       finalScore: scoring.finalScore,
       confidenceScore: scoring.confidenceScore,
-      confidenceLabel: scoring.confidenceInterpretation,
+      confidenceLabel: scoring.confidenceLabel,
       summary: scoring.summary,
       recommendation: scoring.recommendation,
       componentBreakdown: {

@@ -85,6 +85,8 @@ interface ManagerJobCandidateRow {
   status: string;
   resume_score: string | null;
   interview_score: string | null;
+  candidate_score: string | null;
+  candidate_score_confidence_label: string | null;
   hiring_recommendation: string | null;
 }
 
@@ -137,6 +139,8 @@ function mapManagerJobCandidate(row: ManagerJobCandidateRow): ManagerJobCandidat
     status: row.status as ManagerJobCandidateEntry["status"],
     resumeScore: toNumber(row.resume_score),
     interviewScore: toNumber(row.interview_score),
+    candidateScore: toNumber(row.candidate_score),
+    candidateScoreConfidenceLabel: row.candidate_score_confidence_label,
     insightSummary:
       row.hiring_recommendation ??
       "Candidate intelligence is available for resume, interview, and application history review."
@@ -353,9 +357,12 @@ export class JobsRepository {
           a.status,
           a.resume_match_score AS resume_score,
           a.interview_score,
+          cs.final_score AS candidate_score,
+          cs.confidence_label AS candidate_score_confidence_label,
           ci.hiring_recommendation
         FROM applications a
         INNER JOIN candidates c ON c.id = a.candidate_id
+        LEFT JOIN candidate_scores cs ON cs.application_id = a.id
         LEFT JOIN candidate_insights ci ON ci.candidate_id = c.id
         WHERE a.job_id = $1
         ORDER BY

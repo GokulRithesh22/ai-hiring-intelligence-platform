@@ -4,6 +4,7 @@ import { ApiError } from "../../lib/http";
 import { env } from "../../config/env";
 import { applicationsService } from "../applications/applications.service";
 import { interviewSessionsService } from "../interview-sessions/interview-sessions.service";
+import { interviewSessionsRepository } from "../interview-sessions/interview-sessions.repository";
 import {
   buildCompletionInput,
   recordCandidateResponse,
@@ -45,11 +46,20 @@ export class VoiceInterviewsService {
         interviewSession.items?.map((item) => item.question).filter((question) => question.length > 0) ??
         seedQuestions;
     } else if (input.applicationId) {
-      const interviewSession = await applicationsService.startInterview(input.applicationId);
+      const existingInterviewSession = await interviewSessionsRepository.findByApplicationId(
+        input.applicationId
+      );
+
+      const interviewSession =
+        existingInterviewSession?.items?.length
+          ? existingInterviewSession
+          : await applicationsService.startInterview(input.applicationId);
+
       interviewSessionId = interviewSession?.id ?? null;
       seedQuestions =
-        interviewSession?.items?.map((item) => item.question).filter((question) => question.length > 0) ??
-        seedQuestions;
+        interviewSession?.items
+          ?.map((item) => item.question)
+          .filter((question) => question.length > 0) ?? seedQuestions;
     }
 
     const { state, response } = startConversation({
@@ -181,6 +191,8 @@ export class VoiceInterviewsService {
         state.interviewSessionId,
         buildCompletionInput(state)
       );
+
+      this.conversations.delete(input.conversationId);
     }
 
     return response;

@@ -294,6 +294,7 @@ export const candidateScoringResultSchema = z.object({
   potential: candidateScoreComponentSchema,
   finalScore: z.number().min(0).max(100),
   confidenceScore: z.number().min(0).max(1),
+  confidenceLabel: z.enum(["HIGH", "MEDIUM", "LOW"]),
   confidenceInterpretation: z.string(),
   summary: z.string(),
   recommendation: recommendationSchema,
