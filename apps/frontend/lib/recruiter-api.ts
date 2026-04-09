@@ -37,20 +37,26 @@ function mapRecruiterMetrics(
   jobs: ManagerDashboardData,
   hrDashboard: HrDashboardView
 ): RecruiterOverviewData["metrics"] {
+  const summary = jobs.summary ?? {
+    activeJobDescriptions: jobs.jobs.filter((job) => !["CLOSED", "PAUSED"].includes(job.status)).length,
+    totalApplicants: jobs.jobs.reduce((sum, job) => sum + job.applicantsCount, 0),
+    shortlistedCandidates: jobs.jobs.reduce((sum, job) => sum + job.shortlistedCount, 0)
+  };
+
   return [
     {
       label: "Job management",
-      value: String(jobs.summary.activeJobDescriptions),
+      value: String(summary.activeJobDescriptions),
       context: "Active jobs available in recruiter workspace"
     },
     {
       label: "Candidate pipeline",
-      value: String(jobs.summary.totalApplicants),
+      value: String(summary.totalApplicants),
       context: "Applicants across visible jobs"
     },
     {
       label: "Shortlisted",
-      value: String(jobs.summary.shortlistedCandidates),
+      value: String(summary.shortlistedCandidates),
       context: "Candidates ready for recruiter review"
     },
     {
