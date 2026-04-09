@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { submitCandidateApplication } from "@/lib/api-adapters";
+import { VoiceInterviewPanel } from "@/components/candidate/voice-interview-panel";
 import type {
   ApplicationPortalData,
   CandidateApplicationPayload,
@@ -220,6 +221,10 @@ export function CandidateApplicationPortal({
                 </article>
               ))}
             </div>
+
+            {result.interviewQuestions.length === 0 ? null : (
+              <VoiceInterviewPanel questions={result.interviewQuestions} />
+            )}
           </div>
         )}
       </section>

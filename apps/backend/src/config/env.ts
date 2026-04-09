@@ -18,7 +18,13 @@ const envSchema = z.object({
   OBJECT_STORAGE_REGION: z.string().optional(),
   OBJECT_STORAGE_ENDPOINT: z.string().optional(),
   OBJECT_STORAGE_ACCESS_KEY: z.string().optional(),
-  OBJECT_STORAGE_SECRET_KEY: z.string().optional()
+  OBJECT_STORAGE_SECRET_KEY: z.string().optional(),
+  ELEVENLABS_API_KEY: z.string().optional(),
+  ELEVENLABS_API_KEY_ID: z.string().optional(),
+  ELEVENLABS_VOICE_ID: z.string().optional(),
+  ELEVENLABS_TTS_MODEL_ID: z.string().default("eleven_flash_v2_5"),
+  ELEVENLABS_STT_MODEL_ID: z.string().default("scribe_v1"),
+  ELEVENLABS_OUTPUT_FORMAT: z.string().default("mp3_44100_128")
 });
 
 export const env = envSchema.parse(process.env);

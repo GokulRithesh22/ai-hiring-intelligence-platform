@@ -11,6 +11,7 @@ import { hrApprovalsRouter } from "../modules/hr-approvals/hr-approvals.routes";
 import { interviewSessionsRouter } from "../modules/interview-sessions/interview-sessions.routes";
 import { jobsRouter } from "../modules/jobs/jobs.routes";
 import { publicJobsRouter } from "../modules/public-jobs/public-jobs.routes";
+import { voiceInterviewsRouter } from "../modules/voice-interviews/voice-interviews.routes";
 
 export const apiRouter = Router();
 
@@ -25,3 +26,4 @@ apiRouter.use("/candidate-insights", candidateInsightsRouter);
 apiRouter.use("/email-events", emailEventsRouter);
 apiRouter.use("/dashboard", dashboardRouter);
 apiRouter.use("/public/jobs", publicJobsRouter);
+apiRouter.use("/voice/interview", voiceInterviewsRouter);

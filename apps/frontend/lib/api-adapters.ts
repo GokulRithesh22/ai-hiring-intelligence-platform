@@ -19,7 +19,10 @@ import type {
   JobIntakePayload,
   JobIntakeQuestion,
   LandingContent,
-  ScreeningResult
+  ScreeningResult,
+  VoiceInterviewConfig,
+  VoiceInterviewEvaluation,
+  VoiceTranscriptionResult
 } from "@/lib/types";
 
 const apiMode = process.env.NEXT_PUBLIC_API_MODE ?? "mock";
@@ -229,4 +232,86 @@ export async function getCandidateProfile(
       id: candidateId
     };
   });
+}
+
+export async function getVoiceInterviewConfig(): Promise<VoiceInterviewConfig> {
+  return requestOrFallback("/voice/interview/config", undefined, async () => {
+    await sleep(80);
+    return {
+      enabled: false,
+      voiceId: null,
+      ttsModelId: "mock",
+      sttModelId: "mock"
+    };
+  });
+}
+
+export async function synthesizeVoicePrompt(text: string): Promise<Blob | null> {
+  if (apiMode !== "live" || !apiBaseUrl) {
+    return null;
+  }
+
+  const response = await fetch(`${apiBaseUrl}/voice/interview/speak`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ text })
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.blob();
+}
+
+export async function transcribeVoiceAnswer(input: {
+  audioBase64: string;
+  mimeType: string;
+  fileName?: string;
+}): Promise<VoiceTranscriptionResult> {
+  return requestOrFallback(
+    "/voice/interview/transcribe",
+    {
+      method: "POST",
+      body: JSON.stringify(input)
+    },
+    async () => {
+      await sleep(300);
+      return {
+        text: "Mock transcript captured from recorded answer.",
+        languageCode: "en"
+      };
+    }
+  );
+}
+
+export async function evaluateVoiceInterview(payload: {
+  answers: Array<{ question: string; answer: string }>;
+}): Promise<VoiceInterviewEvaluation> {
+  return requestOrFallback(
+    "/voice/interview/evaluate",
+    {
+      method: "POST",
+      body: JSON.stringify(payload)
+    },
+    async () => {
+      await sleep(300);
+      return {
+        communicationScore: 82,
+        knowledgeScore: 80,
+        confidenceScore: 78,
+        overallScore: 80,
+        summary: "Clear answers with solid baseline role understanding and decent confidence.",
+        claimVerificationFlags: [
+          { claim: "Built a repeatable pipeline engine", status: "VERIFY_REFERENCE" }
+        ],
+        suggestedManagerQuestions: [
+          "How would you prioritize channel investments in the first 90 days?",
+          "Which metrics would tell you the growth model is breaking early?"
+        ]
+      };
+    }
+  );
 }

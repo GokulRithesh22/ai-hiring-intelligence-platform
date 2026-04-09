@@ -137,6 +137,28 @@ export type ScreeningResult = {
   interviewQuestions: string[];
 };
 
+export type VoiceInterviewConfig = {
+  enabled: boolean;
+  voiceId: string | null;
+  ttsModelId: string;
+  sttModelId: string;
+};
+
+export type VoiceTranscriptionResult = {
+  text: string;
+  languageCode: string | null;
+};
+
+export type VoiceInterviewEvaluation = {
+  communicationScore: number;
+  knowledgeScore: number;
+  confidenceScore: number;
+  overallScore: number;
+  summary: string;
+  claimVerificationFlags: Array<{ claim: string; status: string }>;
+  suggestedManagerQuestions: string[];
+};
+
 export type CandidateProfileApplication = {
   jobTitle: string;
   date: string;

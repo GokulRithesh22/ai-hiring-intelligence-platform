@@ -18,7 +18,7 @@ export function createApp() {
       origin: env.CORS_ORIGIN.split(",").map((origin) => origin.trim())
     })
   );
-  app.use(express.json({ limit: "2mb" }));
+  app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
   app.use(attachDemoUser);
