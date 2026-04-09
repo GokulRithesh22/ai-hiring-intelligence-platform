@@ -57,8 +57,8 @@ function JobCard({ job }: { job: ManagerJobCardData }) {
           </div>
         </div>
 
-        <Link className="button button-secondary" href={`/manager/jobs/${job.id}`}>
-          Open candidate intelligence
+        <Link className="button button-secondary" href={`/dashboard/jobs/${job.id}`}>
+          Open candidate pipeline
         </Link>
       </div>
 
@@ -71,7 +71,7 @@ function JobCard({ job }: { job: ManagerJobCardData }) {
         <article className="summary-chip">
           <span className="subtle-label">Shortlisted</span>
           <strong>{job.shortlistedCount}</strong>
-          <span className="muted">Ready for deeper manager review</span>
+          <span className="muted">Ready for recruiter review</span>
         </article>
         <article className="summary-chip">
           <span className="subtle-label">Updated</span>
@@ -126,17 +126,14 @@ export function ManagerHiringDashboard({ data }: ManagerHiringDashboardProps) {
       <section className="cta-strip">
         <div>
           <span className="subtle-label" style={{ color: "rgba(255,255,255,0.78)" }}>
-            Manager control center
+            Recruiter control center
           </span>
           <h2 style={{ margin: "8px 0 0" }}>Create, compare, and steer multiple hiring pipelines</h2>
-          <p>
-            Launch a new JD, keep active drafts moving, and jump straight into candidate
-            intelligence for any live role.
-          </p>
+          <p>Launch a new JD, manage publishing states, and jump straight into candidate evidence.</p>
         </div>
 
-        <Link className="button button-secondary" href="/manager/jobs/create">
-          Create New Job Description
+        <Link className="button button-secondary" href="/dashboard/jobs/create">
+          Create Job
         </Link>
       </section>
 
@@ -156,7 +153,7 @@ export function ManagerHiringDashboard({ data }: ManagerHiringDashboardProps) {
             <span className="subtle-label">Job descriptions</span>
             <h2>Active JDs and pipeline health</h2>
           </div>
-          <Link className="button button-primary" href="/manager/jobs/create">
+          <Link className="button button-primary" href="/dashboard/jobs/create">
             New draft
           </Link>
         </div>

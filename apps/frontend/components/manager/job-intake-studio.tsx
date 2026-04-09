@@ -4,8 +4,9 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 
 import {
-  createManagerJobDraft,
-  refineManagerJobDescription
+  createRecruiterJobDraft,
+  refineRecruiterJobDescription,
+  updateRecruiterJobStatus
 } from "@/lib/api-adapters";
 import type {
   JobIntakeQuestion,
@@ -61,6 +62,7 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
   const [draft, setDraft] = useState<ManagerJobDraftResult | null>(null);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [activeFeedback, setActiveFeedback] = useState<ManagerJdFeedbackAction | null>(null);
+  const [publishMessage, setPublishMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const answerMap = mode === "conversational" ? conversationAnswers : structuredAnswers;
@@ -118,7 +120,7 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
           };
 
     startTransition(async () => {
-      const generated = await createManagerJobDraft({
+      const generated = await createRecruiterJobDraft({
         mode,
         jobTitle: normalizedTitle,
         department,
@@ -202,7 +204,7 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
     setActiveFeedback(feedback);
 
     startTransition(async () => {
-      const refined = await refineManagerJobDescription({
+      const refined = await refineRecruiterJobDescription({
         jobId: draft?.jobId ?? null,
         jobTitle: jobTitle.trim(),
         mode,
@@ -232,6 +234,18 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
     });
   };
 
+  const handlePublish = () => {
+    if (!draft?.jobId) {
+      return;
+    }
+
+    startTransition(async () => {
+      setPublishMessage(null);
+      await updateRecruiterJobStatus(draft.jobId as string, "PUBLISHED");
+      setPublishMessage("Job published to the candidate landing page.");
+    });
+  };
+
   const renderModeTabs = () => (
     <div className="shell-actions">
       <button
@@ -257,7 +271,7 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
         <div className="panel-heading">
           <div>
             <span className="subtle-label">JD creation studio</span>
-            <h2>Build a manager-ready job description in two ways</h2>
+            <h2>Build a recruiter-ready job description in two ways</h2>
           </div>
           <span className="status-pill status-progress">{progress}% complete</span>
         </div>
@@ -339,7 +353,7 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
             <div className="chat-feed">
               {!draftJobTitle ? (
                 <div className="empty-state">
-                  Start the conversation to collect structured intake answers from the manager side.
+                  Start the conversation to collect structured intake answers from the recruiter side.
                 </div>
               ) : (
                 conversation.map((entry, index) => (
@@ -544,7 +558,7 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
                 </div>
 
                 <div className="summary-chip">
-                  <span className="subtle-label">Manager interview focus areas</span>
+                  <span className="subtle-label">Interview focus areas</span>
                   <p className="muted" style={{ margin: 0 }}>
                     {selectedVariant.focusAreas.join(" | ")}
                   </p>
@@ -565,20 +579,28 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
                 </div>
 
                 <div className="shell-actions">
-                  <Link className="button button-secondary" href="/manager/dashboard">
-                    Open manager dashboard
+                  <Link className="button button-secondary" href="/dashboard">
+                    Open recruiter dashboard
                   </Link>
                   {draft.jobId ? (
-                    <Link className="button button-primary" href={`/manager/jobs/${draft.jobId}`}>
-                      Open candidate intelligence entry point
-                    </Link>
+                    <>
+                      <button className="button button-primary" onClick={handlePublish} type="button">
+                        Publish job
+                      </button>
+                      <Link className="button button-secondary" href={`/dashboard/jobs/${draft.jobId}`}>
+                        Open candidate pipeline
+                      </Link>
+                    </>
                   ) : (
                     <span className="muted">
-                      Candidate intelligence entry activates automatically when the draft is persisted
-                      via authenticated manager mode.
+                      Candidate pipeline activates automatically when the draft is persisted via the
+                      authenticated recruiter flow.
                     </span>
                   )}
                 </div>
+                {!publishMessage ? null : (
+                  <span className="status-pill status-approved">{publishMessage}</span>
+                )}
               </div>
             ) : null}
           </div>

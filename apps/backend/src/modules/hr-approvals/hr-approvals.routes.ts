@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { requireAuth, requireRole } from "../../middleware/auth";
+import { requireAuth, requireRecruiterRole } from "../../middleware/auth";
 import { hrApprovalsController } from "./hr-approvals.controller";
 
 export const hrApprovalsRouter = Router();
@@ -8,12 +8,12 @@ export const hrApprovalsRouter = Router();
 hrApprovalsRouter.get(
   "/pending",
   requireAuth,
-  requireRole(["HR", "ADMIN"]),
+  requireRecruiterRole,
   hrApprovalsController.listPendingJobs
 );
 hrApprovalsRouter.post(
   "/:jobId/decision",
   requireAuth,
-  requireRole(["HR", "ADMIN"]),
+  requireRecruiterRole,
   hrApprovalsController.reviewJob
 );

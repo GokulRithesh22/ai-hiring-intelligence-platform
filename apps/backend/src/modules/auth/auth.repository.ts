@@ -11,12 +11,16 @@ interface UserRow {
   updated_at: Date;
 }
 
+function normalizeAppRole(role: string): User["role"] {
+  return role === "ADMIN" ? "ADMIN" : "RECRUITER";
+}
+
 function mapUser(row: UserRow): User {
   return {
     id: row.id,
     email: row.email,
     fullName: row.full_name,
-    role: row.role,
+    role: normalizeAppRole(row.role),
     isActive: row.is_active,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString()

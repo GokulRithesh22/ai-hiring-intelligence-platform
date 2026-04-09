@@ -57,7 +57,27 @@ const refineDescriptionSchema = z.object({
   ])
 });
 
+const updateJobSchema = createJobSchema.partial().extend({
+  generatedDescription: z.string().min(20).optional().nullable()
+});
+
+const updateJobStatusSchema = z.object({
+  status: z.enum(["PUBLISHED", "PAUSED", "CLOSED"])
+});
+
 export const jobsController = {
+  getRecruiterDashboard: asyncHandler(async (request, response) => {
+    const user = authService.requireUser(request.user);
+    const scope = request.query.scope === "mine" ? "mine" : "all";
+    response.json(await jobsService.getRecruiterDashboard(user.id, scope));
+  }),
+
+  getRecruiterJobIntelligence: asyncHandler(async (request, response) => {
+    response.json(
+      await jobsService.getRecruiterJobIntelligence(getRouteParam(request.params.jobId, "jobId"))
+    );
+  }),
+
   getManagerDashboard: asyncHandler(async (request, response) => {
     const user = authService.requireUser(request.user);
     response.json(await jobsService.getManagerDashboard(user.id));
@@ -105,6 +125,13 @@ export const jobsController = {
     response.status(201).json(await jobsService.createManagerDraft(payload, user.id));
   }),
 
+  createRecruiterDraft: asyncHandler(async (request, response) => {
+    const user = authService.requireUser(request.user);
+    const payload = parsePayload(managerDraftSchema, request.body);
+
+    response.status(201).json(await jobsService.createRecruiterDraft(payload, user.id));
+  }),
+
   saveIntake: asyncHandler(async (request, response) => {
     const payload = parsePayload(
       z.object({
@@ -141,6 +168,40 @@ export const jobsController = {
         payload.feedback
       )
     );
+  }),
+
+  refineRecruiterDescription: asyncHandler(async (request, response) => {
+    const payload = parsePayload(refineDescriptionSchema, request.body);
+
+    response.json(
+      await jobsService.refineRecruiterDescription(
+        getRouteParam(request.params.jobId, "jobId"),
+        payload.selectedVariantId,
+        payload.feedback
+      )
+    );
+  }),
+
+  updateJob: asyncHandler(async (request, response) => {
+    const payload = parsePayload(updateJobSchema, request.body);
+    response.json(await jobsService.updateJob(getRouteParam(request.params.jobId, "jobId"), payload));
+  }),
+
+  updateJobStatus: asyncHandler(async (request, response) => {
+    const payload = parsePayload(updateJobStatusSchema, request.body);
+    const jobId = getRouteParam(request.params.jobId, "jobId");
+
+    if (payload.status === "PUBLISHED") {
+      response.json(await jobsService.publishJob(jobId));
+      return;
+    }
+
+    if (payload.status === "PAUSED") {
+      response.json(await jobsService.pauseJob(jobId));
+      return;
+    }
+
+    response.json(await jobsService.closeJob(jobId));
   }),
 
   submitForApproval: asyncHandler(async (request, response) => {

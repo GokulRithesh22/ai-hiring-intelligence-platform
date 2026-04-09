@@ -8,23 +8,14 @@ export function TopNav() {
         <span>Hiring Intelligence</span>
       </Link>
       <div className="landing-links">
-        <Link className="button button-ghost" href="/manager/dashboard">
-          Manager flow
-        </Link>
-        <Link className="button button-ghost" href="/hr/dashboard">
-          HR Dashboard
-        </Link>
-        <Link className="button button-ghost" href="/hr/login">
-          HR Login
-        </Link>
-        <Link className="button button-ghost" href="/hr/jobs">
-          HR Jobs
+        <Link className="button button-ghost" href="/dashboard">
+          Recruiter Dashboard
         </Link>
         <Link className="button button-ghost" href="/jobs/growth-marketing-manager/apply">
           Candidate Portal
         </Link>
-        <Link className="button button-primary" href="/hr/candidates">
-          HR Candidates
+        <Link className="button button-primary" href="/login">
+          Recruiter Login
         </Link>
       </div>
     </div>

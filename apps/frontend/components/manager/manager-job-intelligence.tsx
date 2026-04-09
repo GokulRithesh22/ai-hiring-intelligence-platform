@@ -49,7 +49,7 @@ export function ManagerJobIntelligence({ data }: ManagerJobIntelligenceProps) {
         <article className="summary-chip">
           <span className="subtle-label">Shortlisted</span>
           <strong>{data.job.shortlistedCount}</strong>
-          <span className="muted">Highest-priority manager reviews</span>
+          <span className="muted">Highest-priority recruiter reviews</span>
         </article>
         <article className="summary-chip">
           <span className="subtle-label">Status</span>
@@ -62,10 +62,10 @@ export function ManagerJobIntelligence({ data }: ManagerJobIntelligenceProps) {
         <div className="panel-heading">
           <div>
             <span className="subtle-label">Pipeline snapshot</span>
-            <h2>Candidate intelligence entry points for this JD</h2>
+            <h2>Candidate intelligence entry points for this job</h2>
           </div>
-          <Link className="button button-secondary" href="/manager/jobs">
-            Back to manager dashboard
+          <Link className="button button-secondary" href="/dashboard/jobs">
+            Back to recruiter job board
           </Link>
         </div>
 
@@ -133,7 +133,7 @@ export function ManagerJobIntelligence({ data }: ManagerJobIntelligenceProps) {
               </div>
 
               <div className="shell-actions">
-                <Link className="button button-primary" href={`/manager/candidates/${candidate.candidateId}`}>
+                <Link className="button button-primary" href={`/dashboard/candidates/${candidate.candidateId}`}>
                   Open candidate intelligence
                 </Link>
                 <span className="muted">Application {candidate.applicationId}</span>

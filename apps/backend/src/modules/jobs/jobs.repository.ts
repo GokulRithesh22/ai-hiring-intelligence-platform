@@ -251,7 +251,13 @@ export class JobsRepository {
     const result = await query<JobRow>(
       `
         UPDATE jobs
-        SET status = $2, updated_at = NOW()
+        SET
+          status = $2,
+          published_at = CASE
+            WHEN $2 = 'PUBLISHED' THEN COALESCE(published_at, NOW())
+            ELSE published_at
+          END,
+          updated_at = NOW()
         WHERE id = $1
         RETURNING *
       `,
@@ -261,15 +267,66 @@ export class JobsRepository {
     return result.rows[0] ? mapJob(result.rows[0]) : null;
   }
 
+  async update(jobId: string, input: Partial<{
+    title: string;
+    department: string | null;
+    location: string | null;
+    employmentType: Job["employmentType"];
+    minExperienceYears: number | null;
+    salaryMin: number | null;
+    salaryMax: number | null;
+    currency: string | null;
+    joiningTimeline: string | null;
+    relocationRequired: boolean;
+    generatedDescription: string;
+  }>): Promise<Job | null> {
+    const result = await query<JobRow>(
+      `
+        UPDATE jobs
+        SET
+          title = COALESCE($2, title),
+          department = COALESCE($3, department),
+          location = COALESCE($4, location),
+          employment_type = COALESCE($5, employment_type),
+          min_experience_years = COALESCE($6, min_experience_years),
+          salary_min = COALESCE($7, salary_min),
+          salary_max = COALESCE($8, salary_max),
+          currency = COALESCE($9, currency),
+          joining_timeline = COALESCE($10, joining_timeline),
+          relocation_required = COALESCE($11, relocation_required),
+          generated_description = COALESCE($12, generated_description),
+          updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+      `,
+      [
+        jobId,
+        input.title ?? null,
+        input.department ?? null,
+        input.location ?? null,
+        input.employmentType ?? null,
+        input.minExperienceYears ?? null,
+        input.salaryMin ?? null,
+        input.salaryMax ?? null,
+        input.currency ?? null,
+        input.joiningTimeline ?? null,
+        input.relocationRequired ?? null,
+        input.generatedDescription ?? null
+      ]
+    );
+
+    return result.rows[0] ? mapJob(result.rows[0]) : null;
+  }
+
   async listPublic(): Promise<Job[]> {
     const result = await query<JobRow>(
-      "SELECT * FROM jobs WHERE status IN ('APPROVED', 'PUBLISHED') ORDER BY created_at DESC"
+      "SELECT * FROM jobs WHERE status = 'PUBLISHED' ORDER BY created_at DESC"
     );
 
     return result.rows.map(mapJob);
   }
 
-  async listManagerDashboardJobs(createdBy: string): Promise<ManagerJobDashboardItem[]> {
+  async listDashboardJobs(createdBy?: string): Promise<ManagerJobDashboardItem[]> {
     const result = await query<ManagerJobDashboardRow>(
       `
         SELECT
@@ -298,16 +355,16 @@ export class JobsRepository {
           FROM applications a
           WHERE a.job_id = j.id
         ) stats ON true
-        WHERE j.created_by = $1
+        WHERE ($1::uuid IS NULL OR j.created_by = $1)
         ORDER BY j.updated_at DESC
       `,
-      [createdBy]
+      [createdBy ?? null]
     );
 
     return result.rows.map(mapManagerJobDashboardItem);
   }
 
-  async findManagerDashboardJob(jobId: string, createdBy: string): Promise<ManagerJobDashboardItem | null> {
+  async findDashboardJob(jobId: string, createdBy?: string): Promise<ManagerJobDashboardItem | null> {
     const result = await query<ManagerJobDashboardRow>(
       `
         SELECT
@@ -336,13 +393,21 @@ export class JobsRepository {
           FROM applications a
           WHERE a.job_id = j.id
         ) stats ON true
-        WHERE j.id = $1 AND j.created_by = $2
+        WHERE j.id = $1 AND ($2::uuid IS NULL OR j.created_by = $2)
         LIMIT 1
       `,
-      [jobId, createdBy]
+      [jobId, createdBy ?? null]
     );
 
     return result.rows[0] ? mapManagerJobDashboardItem(result.rows[0]) : null;
+  }
+
+  async listManagerDashboardJobs(createdBy: string): Promise<ManagerJobDashboardItem[]> {
+    return this.listDashboardJobs(createdBy);
+  }
+
+  async findManagerDashboardJob(jobId: string, createdBy: string): Promise<ManagerJobDashboardItem | null> {
+    return this.findDashboardJob(jobId, createdBy);
   }
 
   async listManagerJobCandidates(jobId: string): Promise<ManagerJobCandidateEntry[]> {

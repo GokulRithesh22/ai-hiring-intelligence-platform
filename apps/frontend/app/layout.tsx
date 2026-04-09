@@ -11,7 +11,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "AI Hiring Intelligence Platform",
   description:
-    "Production-ready hiring intelligence workspace for managers, HR teams, and candidates."
+    "Production-ready hiring intelligence workspace for recruiters and candidates."
 };
 
 export default function RootLayout({

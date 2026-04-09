@@ -4,6 +4,7 @@ import { getCandidateProfile as getFallbackCandidateProfile } from "@/lib/api-ad
 import type { CandidateProfileData, HrCandidateDetail } from "@/lib/types";
 import { getHrSession } from "@/lib/hr-auth";
 import { getManagerSession } from "@/lib/manager-auth";
+import { getRecruiterSession } from "@/lib/recruiter-auth";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -135,6 +136,20 @@ export async function getProtectedCandidateProfile(
 ): Promise<CandidateProfileData> {
   if (!apiBaseUrl) {
     return getFallbackCandidateProfile(candidateId);
+  }
+
+  const recruiterSession = await getRecruiterSession();
+  if (recruiterSession) {
+    const response = await fetch(`${apiBaseUrl}/hr/candidates/${candidateId}`, {
+      headers: {
+        Authorization: `Bearer ${recruiterSession.accessToken}`
+      },
+      cache: "no-store"
+    });
+
+    if (response.ok) {
+      return mapHrCandidateDetailToCandidateProfile((await response.json()) as HrCandidateDetail);
+    }
   }
 
   const managerSession = await getManagerSession();

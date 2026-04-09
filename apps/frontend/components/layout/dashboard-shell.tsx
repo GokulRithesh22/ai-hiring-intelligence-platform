@@ -10,29 +10,9 @@ const navigation = [
     description: "Landing page and product narrative"
   },
   {
-    href: "/manager/dashboard",
-    label: "Manager Job Flow",
-    description: "Protected manager workspace"
-  },
-  {
-    href: "/hr/dashboard",
-    label: "HR Dashboard",
-    description: "Protected HR control center"
-  },
-  {
-    href: "/hr/jobs",
-    label: "HR Jobs",
-    description: "Role table and job detail views"
-  },
-  {
-    href: "/hr/candidates",
-    label: "HR Candidates",
-    description: "Candidate intelligence and application history"
-  },
-  {
-    href: "/hr/analytics",
-    label: "HR Analytics",
-    description: "Applications, completion rate, and averages"
+    href: "/dashboard",
+    label: "Recruiter Dashboard",
+    description: "Unified recruiter workspace"
   },
   {
     href: "/jobs/growth-marketing-manager/apply",
@@ -96,11 +76,11 @@ export function DashboardShell({
           </div>
 
           <div className="shell-actions">
-            <Link className="button button-secondary" href="/manager/dashboard">
+            <Link className="button button-secondary" href="/dashboard/jobs/create">
               New job request
             </Link>
-            <Link className="button button-primary" href="/hr/dashboard">
-              Open HR workspace
+            <Link className="button button-primary" href="/dashboard">
+              Open recruiter workspace
             </Link>
           </div>
         </header>

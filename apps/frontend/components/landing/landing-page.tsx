@@ -16,7 +16,7 @@ export function LandingPage({ jobs }: LandingPageProps) {
           </Link>
 
           <div className="landing-links">
-            <Link className="button button-primary" href="/manager/login">
+            <Link className="button button-primary" href="/login">
               Login
             </Link>
           </div>

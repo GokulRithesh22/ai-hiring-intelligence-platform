@@ -111,6 +111,17 @@ export type ManagerDashboardData = {
   jobs: ManagerJobCardData[];
 };
 
+export type RecruiterJobFilter = "all" | "mine";
+
+export type RecruiterOverviewData = {
+  metrics: ManagerDashboardMetric[];
+  jobs: ManagerJobCardData[];
+  candidates: HrCandidateListItem[];
+  analytics: HrAnalyticsData;
+  funnel: HrFunnelStage[];
+  activeFilter: RecruiterJobFilter;
+};
+
 export type ManagerJobDescriptionVariant = {
   id: string;
   label: string;

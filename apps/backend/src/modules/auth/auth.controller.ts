@@ -7,7 +7,7 @@ import { authService } from "./auth.service";
 const createDemoSessionSchema = z.object({
   email: z.string().email(),
   fullName: z.string().min(2),
-  role: z.enum(["MANAGER", "HR", "RECRUITER", "ADMIN"])
+  role: z.enum(["RECRUITER", "ADMIN"])
 });
 
 export const authController = {

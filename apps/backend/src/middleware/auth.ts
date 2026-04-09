@@ -45,13 +45,11 @@ function normalizeRole(role: RoleInput): UserRole {
 
 function parseSupabaseRole(role: unknown): UserRole {
   if (typeof role !== "string") {
-    return "MANAGER";
+    return "RECRUITER";
   }
 
   const normalized = role.toUpperCase();
-  return normalized === "HR" || normalized === "ADMIN" || normalized === "RECRUITER"
-    ? (normalized as UserRole)
-    : "MANAGER";
+  return normalized === "ADMIN" ? "ADMIN" : "RECRUITER";
 }
 
 function extractBearerToken(request: Request): string | null {
@@ -176,4 +174,5 @@ export function requireRole(rolesOrRole: RoleInput[] | RoleInput, ...remainingRo
   };
 }
 
-export const requireHrRole = requireRole(["HR", "ADMIN"]);
+export const requireRecruiterRole = requireRole(["RECRUITER", "ADMIN"]);
+export const requireHrRole = requireRecruiterRole;

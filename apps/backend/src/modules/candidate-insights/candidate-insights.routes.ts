@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { requireAuth, requireRole } from "../../middleware/auth";
+import { requireAuth, requireRecruiterRole } from "../../middleware/auth";
 import { candidateInsightsController } from "./candidate-insights.controller";
 
 export const candidateInsightsRouter = Router();
@@ -8,6 +8,6 @@ export const candidateInsightsRouter = Router();
 candidateInsightsRouter.get(
   "/:candidateId",
   requireAuth,
-  requireRole("MANAGER", "HR", "ADMIN"),
+  requireRecruiterRole,
   candidateInsightsController.getByCandidate
 );

@@ -70,25 +70,125 @@ export class JobsService {
     return job;
   }
 
-  async getManagerDashboard(createdBy: string): Promise<ManagerDashboardData> {
-    const jobs = await jobsRepository.listManagerDashboardJobs(createdBy);
+  async updateJob(
+    jobId: string,
+    input: Partial<CreateJobInput> & { generatedDescription?: string | null }
+  ) {
+    const job = await jobsRepository.update(jobId, {
+      title: input.title,
+      department: input.department ?? null,
+      location: input.location ?? null,
+      employmentType: input.employmentType,
+      minExperienceYears: input.minExperienceYears ?? null,
+      salaryMin: input.salaryMin ?? null,
+      salaryMax: input.salaryMax ?? null,
+      currency: input.currency ?? null,
+      joiningTimeline: input.joiningTimeline ?? null,
+      relocationRequired: input.relocationRequired,
+      generatedDescription: input.generatedDescription ?? undefined
+    });
+
+    if (!job) {
+      throw new ApiError(404, "Job not found");
+    }
+
+    await this.refreshStructuredAnalysis(job.id);
+    return this.getJobById(job.id);
+  }
+
+  async publishJob(jobId: string) {
+    return this.requireUpdatedStatus(jobId, "PUBLISHED");
+  }
+
+  async pauseJob(jobId: string) {
+    return this.requireUpdatedStatus(jobId, "PAUSED");
+  }
+
+  async closeJob(jobId: string) {
+    return this.requireUpdatedStatus(jobId, "CLOSED");
+  }
+
+  async getRecruiterDashboard(
+    currentUserId: string,
+    scope: "all" | "mine" = "all"
+  ): Promise<ManagerDashboardData> {
+    const jobs = await jobsRepository.listDashboardJobs(scope === "mine" ? currentUserId : undefined);
 
     return {
       summary: {
-        activeJobDescriptions: jobs.filter((job) => job.status !== "CLOSED").length,
+        activeJobDescriptions: jobs.filter((job) => !["CLOSED", "PAUSED"].includes(job.status)).length,
         totalApplicants: jobs.reduce((sum, job) => sum + job.applicantsCount, 0),
         shortlistedCandidates: jobs.reduce((sum, job) => sum + job.shortlistedCount, 0),
-        pendingApproval: jobs.filter((job) => job.status === "PENDING_HR_APPROVAL").length
+        pendingApproval: jobs.filter((job) => job.status === "DRAFT").length
       },
       jobs
     };
+  }
+
+  async getRecruiterJobIntelligence(jobId: string): Promise<ManagerJobIntelligenceDetail> {
+    const job = await jobsRepository.findDashboardJob(jobId);
+
+    if (!job) {
+      throw new ApiError(404, "Recruiter job dashboard not found");
+    }
+
+    const candidates = await jobsRepository.listManagerJobCandidates(jobId);
+
+    return {
+      job,
+      candidates
+    };
+  }
+
+  async createRecruiterDraft(
+    input: ManagerJobDraftRequest,
+    createdBy: string
+  ): Promise<ManagerJobDraftResponse> {
+    return this.createManagerDraft(input, createdBy);
+  }
+
+  async refineRecruiterDescription(
+    jobId: string,
+    selectedVariantId: string,
+    feedback: ManagerJobFeedbackAction
+  ): Promise<ManagerJobDraftResponse> {
+    const job = await this.getJobById(jobId);
+    const variants = this.buildManagerVariants({
+      title: job.title,
+      location: job.location,
+      experienceLevel:
+        job.minExperienceYears != null ? `${job.minExperienceYears}+ years` : null,
+      salaryRange: this.formatPersistedSalaryRange(job),
+      joiningTimeline: job.joiningTimeline,
+      relocationRequired: job.relocationRequired,
+      intakeAnswers: job.intakeAnswers,
+      baseDescription: job.generatedDescription,
+      focusAreas: this.getFocusAreas(job),
+      mode: "STRUCTURED_INPUT",
+      feedback
+    });
+
+    const selectedVariant = variants.find((variant) => variant.id === selectedVariantId) ?? variants[0];
+
+    await jobsRepository.updateDescription(jobId, selectedVariant.description);
+    await this.refreshStructuredAnalysis(jobId);
+
+    return {
+      job: (await this.getJobById(jobId)) as Job,
+      variants,
+      selectedVariantId: selectedVariant.id
+    };
+  }
+
+  async getManagerDashboard(createdBy: string): Promise<ManagerDashboardData> {
+    return this.getRecruiterDashboard(createdBy, "mine");
   }
 
   async getManagerJobIntelligence(
     jobId: string,
     createdBy: string
   ): Promise<ManagerJobIntelligenceDetail> {
-    const job = await jobsRepository.findManagerDashboardJob(jobId, createdBy);
+    const job = await jobsRepository.findDashboardJob(jobId, createdBy);
 
     if (!job) {
       throw new ApiError(404, "Manager job dashboard not found");
@@ -177,6 +277,16 @@ export class JobsService {
       variants,
       selectedVariantId: selectedVariant.id
     };
+  }
+
+  private async requireUpdatedStatus(jobId: string, status: "PUBLISHED" | "PAUSED" | "CLOSED") {
+    const job = await jobsRepository.updateStatus(jobId, status);
+
+    if (!job) {
+      throw new ApiError(404, "Job not found");
+    }
+
+    return job;
   }
 
   private async refreshStructuredAnalysis(jobId: string) {

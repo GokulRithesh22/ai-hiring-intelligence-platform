@@ -1114,6 +1114,42 @@ export async function createManagerJobDraft(
   });
 }
 
+export async function createRecruiterJobDraft(
+  payload: ManagerJobDraftPayload
+): Promise<ManagerJobDraftResult> {
+  const requestPayload = mapManagerDraftPayloadToRequest(payload);
+
+  if (typeof window !== "undefined") {
+    const response = await fetch("/api/recruiter/jobs/drafts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestPayload),
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Unable to create recruiter draft");
+    }
+
+    const payload = (await response.json()) as {
+      job: { id: string; title: string };
+      variants: ManagerJobDescriptionVariant[];
+      selectedVariantId: string;
+    };
+
+    return {
+      jobId: payload.job.id,
+      jobTitle: payload.job.title,
+      selectedVariantId: payload.selectedVariantId,
+      variants: payload.variants
+    };
+  }
+
+  return createManagerJobDraft(payload);
+}
+
 export async function refineManagerJobDescription(input: {
   jobId: string | null;
   jobTitle: string;
@@ -1235,6 +1271,78 @@ export async function refineManagerJobDescription(input: {
       input.feedback
     )
   };
+}
+
+export async function refineRecruiterJobDescription(input: {
+  jobId: string | null;
+  jobTitle: string;
+  mode: ManagerJobDraftPayload["mode"];
+  answers: ManagerJobDraftPayload["answers"];
+  selectedVariantId: string;
+  feedback: ManagerJdFeedbackAction;
+  variants: ManagerJobDescriptionVariant[];
+  department?: string;
+  location?: string;
+  experienceLevel?: string;
+  salaryRange?: string;
+  joiningTimeline?: string;
+  relocation?: string;
+}): Promise<ManagerJobDraftResult> {
+  if (typeof window !== "undefined" && input.jobId) {
+    const response = await fetch(`/api/recruiter/jobs/${input.jobId}/refine-description`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        selectedVariantId: input.selectedVariantId,
+        feedback: input.feedback
+      }),
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Unable to refine recruiter draft");
+    }
+
+    const payload = (await response.json()) as {
+      job: { id: string; title: string };
+      variants: ManagerJobDescriptionVariant[];
+      selectedVariantId: string;
+    };
+
+    return {
+      jobId: payload.job.id,
+      jobTitle: payload.job.title,
+      selectedVariantId: payload.selectedVariantId,
+      variants: payload.variants
+    };
+  }
+
+  return refineManagerJobDescription(input);
+}
+
+export async function updateRecruiterJobStatus(jobId: string, status: "PUBLISHED" | "PAUSED" | "CLOSED") {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  const response = await fetch(`/api/recruiter/jobs/${jobId}/status`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      status
+    }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error("Unable to update recruiter job status");
+  }
+
+  return response.json();
 }
 
 function normalizeCurrency(value: string) {

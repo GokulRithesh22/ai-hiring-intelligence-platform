@@ -1,10 +1,11 @@
 export type UUID = string;
 
-export type UserRole = "MANAGER" | "HR" | "RECRUITER" | "ADMIN";
+export type UserRole = "RECRUITER" | "ADMIN";
 export type JobStatus =
   | "DRAFT"
   | "PENDING_HR_APPROVAL"
   | "APPROVED"
+  | "PAUSED"
   | "REJECTED"
   | "PUBLISHED"
   | "CLOSED";

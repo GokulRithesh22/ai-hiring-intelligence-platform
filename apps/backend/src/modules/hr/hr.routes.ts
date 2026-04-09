@@ -1,11 +1,11 @@
 import { Router } from "express";
 
-import { requireAuth, requireHrRole } from "../../middleware/auth";
+import { requireAuth, requireRecruiterRole } from "../../middleware/auth";
 import { hrController } from "./hr.controller";
 
 export const hrRouter = Router();
 
-hrRouter.use(requireAuth, requireHrRole);
+hrRouter.use(requireAuth, requireRecruiterRole);
 
 hrRouter.get("/dashboard", hrController.getDashboard);
 hrRouter.get("/jobs", hrController.listJobs);
