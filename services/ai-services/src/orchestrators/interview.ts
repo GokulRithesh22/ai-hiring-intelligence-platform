@@ -1,9 +1,19 @@
+import type {
+  StructuredJobDescriptionAnalysis,
+  StructuredResumeAnalysis
+} from "../domain/contracts.js";
 import { scoreFromText } from "../utils/mock.js";
 
 export interface InterviewQuestionRequest {
   jobTitle: string;
   jobDescription: string;
   resumeSummary: string;
+  resumeAnalysis?: Partial<StructuredResumeAnalysis>;
+  jobAnalysis?: Partial<StructuredJobDescriptionAnalysis>;
+  screening?: {
+    strengths?: string[];
+    weaknesses?: string[];
+  };
 }
 
 export interface InterviewEvaluationRequest {
@@ -11,12 +21,74 @@ export interface InterviewEvaluationRequest {
 }
 
 export async function generateInterviewQuestions(request: InterviewQuestionRequest) {
+  const resumeAnalysis = request.resumeAnalysis ?? {};
+  const jobAnalysis = request.jobAnalysis ?? {};
+  const screening = request.screening ?? {};
+
+  const primaryRole = resumeAnalysis.roles?.[0]?.trim();
+  const primarySkill =
+    firstNonEmpty(jobAnalysis.requiredSkills) ??
+    firstNonEmpty(resumeAnalysis.skills) ??
+    inferCapabilityFromDescription(request.jobDescription) ??
+    "the core capability this role depends on";
+  const preferredSkill =
+    firstNonEmpty(jobAnalysis.preferredSkills) ??
+    nthNonEmpty(jobAnalysis.requiredSkills, 1) ??
+    nthNonEmpty(resumeAnalysis.skills, 1) ??
+    "cross-functional decision-making";
+  const domain =
+    firstNonEmpty(jobAnalysis.domain) ??
+    inferDomainFromDescription(request.jobDescription) ??
+    request.jobTitle;
+  const tool =
+    firstNonEmpty(jobAnalysis.toolsRequired) ??
+    firstNonEmpty(resumeAnalysis.toolsUsed) ??
+    "your usual operating stack";
+  const gap =
+    firstNonEmpty(screening.weaknesses) ??
+    `depth in ${preferredSkill}`;
+  const strength =
+    firstNonEmpty(screening.strengths) ??
+    firstNonEmpty(resumeAnalysis.achievements) ??
+    `your experience in ${domain}`;
+  const achievement =
+    firstNonEmpty(resumeAnalysis.achievements) ??
+    "a result you owned personally";
+
   return [
-    `Tell us about a project where you solved a core ${request.jobTitle} problem under pressure.`,
-    "How do you make trade-offs when goals conflict across functions?",
-    "Which metrics would you monitor in your first 30 days, and why?",
-    "Describe a time your initial strategy was wrong and how you corrected it."
+    `Your resume suggests experience around ${strength}. Which project best shows you are ready for this ${request.jobTitle} role, and what outcome did you personally drive?`,
+    `This role depends on strong ${primarySkill}. Walk me through a real example where you used ${primarySkill} in depth, including the decisions you made and how you measured success.`,
+    `One possible gap from the screening pass is ${gap}. Tell me about a time you had to solve a hard problem in that area or close a similar gap quickly.`,
+    `If you joined as ${request.jobTitle}, how would you use ${tool} in your first 30 days to improve results in ${domain}, and which metrics would you watch first?`,
+    `You mentioned ${achievement}. When priorities conflicted across teams, how did you align people, make trade-offs, and still move the business forward?`
   ];
+}
+
+function firstNonEmpty(values?: string[]) {
+  return values?.map((value) => value.trim()).find(Boolean) ?? null;
+}
+
+function nthNonEmpty(values: string[] | undefined, index: number) {
+  return values?.map((value) => value.trim()).filter(Boolean)[index] ?? null;
+}
+
+function inferCapabilityFromDescription(jobDescription: string) {
+  const lowered = jobDescription.toLowerCase();
+  if (lowered.includes("growth")) return "growth experimentation";
+  if (lowered.includes("lifecycle")) return "lifecycle execution";
+  if (lowered.includes("product")) return "product judgment";
+  if (lowered.includes("sales")) return "commercial execution";
+  if (lowered.includes("marketing")) return "performance marketing";
+  return null;
+}
+
+function inferDomainFromDescription(jobDescription: string) {
+  const lowered = jobDescription.toLowerCase();
+  if (lowered.includes("saas")) return "B2B SaaS";
+  if (lowered.includes("fintech")) return "fintech";
+  if (lowered.includes("health")) return "healthcare";
+  if (lowered.includes("ecommerce")) return "e-commerce";
+  return null;
 }
 
 export async function evaluateInterview(request: InterviewEvaluationRequest) {

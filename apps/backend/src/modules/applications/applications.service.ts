@@ -111,6 +111,7 @@ export class ApplicationsService {
     const application = await this.getApplication(applicationId);
     const candidate = await candidatesRepository.findById(application.candidateId);
     const job = await jobsRepository.findById(application.jobId);
+    const screening = await screeningResultsRepository.findByApplicationId(applicationId);
 
     if (!candidate || !job) {
       throw new ApiError(404, "Related candidate or job not found");
@@ -119,7 +120,15 @@ export class ApplicationsService {
     const questions = await generateInterviewQuestions({
       jobTitle: job.title,
       jobDescription: job.approvedDescription ?? job.generatedDescription,
-      resumeSummary: candidate.resumeText ?? candidate.currentCompany ?? ""
+      resumeSummary: candidate.resumeText ?? candidate.currentCompany ?? "",
+      resumeAnalysis:
+        (screening?.resumeAnalysis as StructuredResumeAnalysis | undefined) ?? undefined,
+      jobAnalysis:
+        (screening?.jobAnalysis as StructuredJobDescriptionAnalysis | undefined) ?? undefined,
+      screening: {
+        strengths: screening?.strengths ?? [],
+        weaknesses: screening?.weaknesses ?? []
+      }
     });
 
     await applicationsRepository.updateStatus(applicationId, "INTERVIEW_PENDING");
