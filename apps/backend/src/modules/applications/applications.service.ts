@@ -268,7 +268,7 @@ export class ApplicationsService {
         questionId: string;
         score: number;
         rationale: string;
-        evidence?: string[];
+        evidence: string[];
       }>;
       questionAnswerPairs: Array<{
         questionId: string;
