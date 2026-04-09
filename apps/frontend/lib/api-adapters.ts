@@ -5,8 +5,7 @@ import {
   defaultGeneratedJobDescription,
   hrDashboardData,
   jobIntakeQuestions,
-  landingContent,
-  screeningResult as mockApplicationSubmissionResult
+  landingContent
 } from "@/lib/mock-data";
 import type {
   ApplicationSubmissionResult,
@@ -41,6 +40,21 @@ import type {
 
 const apiMode = process.env.NEXT_PUBLIC_API_MODE ?? "mock";
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+const fallbackApplicationSubmissionResult: ApplicationSubmissionResult = {
+  applicationId: "app-mock-001",
+  candidateId: "cand-mock-001",
+  status: "qualified",
+  statusMessage:
+    "Application submitted successfully. You are eligible to continue to the AI interview.",
+  interviewInvitation:
+    "You qualified for the AI interview based on semantic resume screening and business rule checks.",
+  interviewQuestions: [
+    "How have you improved paid media efficiency while protecting pipeline quality in a SaaS environment?",
+    "Walk through an experiment you designed that materially changed conversion rates or CAC.",
+    "How do you align marketing, product, and revenue teams around attribution decisions?",
+    "What dashboards or analyses do you rely on to identify growth bottlenecks early?"
+  ]
+};
 const mockVoiceConversations = new Map<
   string,
   {
@@ -1306,13 +1320,13 @@ export async function submitCandidateApplication(
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(360);
     const fallbackResult: ApplicationSubmissionResult = {
-      applicationId: mockApplicationSubmissionResult.applicationId,
-      candidateId: mockApplicationSubmissionResult.candidateId,
-      status: mockApplicationSubmissionResult.status,
-      statusMessage: mockApplicationSubmissionResult.statusMessage,
-      interviewInvitation: mockApplicationSubmissionResult.interviewInvitation,
+      applicationId: fallbackApplicationSubmissionResult.applicationId,
+      candidateId: fallbackApplicationSubmissionResult.candidateId,
+      status: fallbackApplicationSubmissionResult.status,
+      statusMessage: fallbackApplicationSubmissionResult.statusMessage,
+      interviewInvitation: fallbackApplicationSubmissionResult.interviewInvitation,
       interviewQuestions: payload.resumeFile
-        ? mockApplicationSubmissionResult.interviewQuestions
+        ? fallbackApplicationSubmissionResult.interviewQuestions
         : []
     };
     return fallbackResult;
@@ -1347,13 +1361,13 @@ export async function submitCandidateApplication(
     return (await response.json()) as ApplicationSubmissionResult;
   } catch {
     const fallbackResult: ApplicationSubmissionResult = {
-      applicationId: mockApplicationSubmissionResult.applicationId,
-      candidateId: mockApplicationSubmissionResult.candidateId,
-      status: mockApplicationSubmissionResult.status,
-      statusMessage: mockApplicationSubmissionResult.statusMessage,
-      interviewInvitation: mockApplicationSubmissionResult.interviewInvitation,
+      applicationId: fallbackApplicationSubmissionResult.applicationId,
+      candidateId: fallbackApplicationSubmissionResult.candidateId,
+      status: fallbackApplicationSubmissionResult.status,
+      statusMessage: fallbackApplicationSubmissionResult.statusMessage,
+      interviewInvitation: fallbackApplicationSubmissionResult.interviewInvitation,
       interviewQuestions: payload.resumeFile
-        ? mockApplicationSubmissionResult.interviewQuestions
+        ? fallbackApplicationSubmissionResult.interviewQuestions
         : []
     };
     return fallbackResult;
