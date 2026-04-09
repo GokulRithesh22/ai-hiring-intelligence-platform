@@ -42,8 +42,8 @@ export class VoiceInterviewsService {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "xi-api-key": env.ELEVENLABS_API_KEY
-        },
+          "xi-api-key": env.ELEVENLABS_API_KEY as string
+        } as HeadersInit,
         body: JSON.stringify({
           text,
           model_id: env.ELEVENLABS_TTS_MODEL_ID
@@ -83,7 +83,7 @@ export class VoiceInterviewsService {
       method: "POST",
       headers: {
         "xi-api-key": env.ELEVENLABS_API_KEY as string
-      },
+      } as HeadersInit,
       body: formData
     });
 

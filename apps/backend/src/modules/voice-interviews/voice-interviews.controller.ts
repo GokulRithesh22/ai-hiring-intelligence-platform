@@ -38,7 +38,13 @@ export const voiceInterviewsController = {
 
   transcribe: asyncHandler(async (request, response) => {
     const payload = parsePayload(transcribeSchema, request.body);
-    response.json(await voiceInterviewsService.transcribe(payload));
+    response.json(
+      await voiceInterviewsService.transcribe({
+        audioBase64: payload.audioBase64,
+        mimeType: payload.mimeType,
+        fileName: payload.fileName ?? undefined
+      })
+    );
   }),
 
   evaluate: asyncHandler(async (request, response) => {

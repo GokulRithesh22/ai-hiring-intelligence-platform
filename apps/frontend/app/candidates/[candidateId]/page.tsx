@@ -3,13 +3,13 @@ import { CandidateIntelligencePage } from "@/components/candidate/candidate-inte
 import { getCandidateProfile } from "@/lib/api-adapters";
 
 type CandidatePageProps = {
-  params: Promise<{
+  params: {
     candidateId: string;
-  }>;
+  };
 };
 
 export default async function CandidatePage({ params }: CandidatePageProps) {
-  const { candidateId } = await params;
+  const { candidateId } = params;
   const profile = await getCandidateProfile(candidateId);
 
   return (

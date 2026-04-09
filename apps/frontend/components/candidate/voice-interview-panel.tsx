@@ -60,7 +60,7 @@ export function VoiceInterviewPanel({ questions }: VoiceInterviewPanelProps) {
           question,
           answer: transcripts[index]
         }))
-        .filter((item) => item.answer),
+        .filter((item): item is { question: string; answer: string } => Boolean(item.answer)),
     [questions, transcripts]
   );
 
@@ -85,6 +85,15 @@ export function VoiceInterviewPanel({ questions }: VoiceInterviewPanelProps) {
   };
 
   const startRecording = async () => {
+    if (
+      typeof navigator === "undefined" ||
+      !navigator.mediaDevices ||
+      typeof MediaRecorder === "undefined"
+    ) {
+      setStatus("Recording is not supported in this browser");
+      return;
+    }
+
     const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     streamRef.current = mediaStream;
     chunksRef.current = [];
