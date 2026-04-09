@@ -1387,6 +1387,20 @@ export async function getCandidateProfile(
 }
 
 export async function getVoiceInterviewConfig(): Promise<VoiceInterviewConfig> {
+  if (typeof window !== "undefined") {
+    try {
+      const response = await fetch("/api/voice/interview/config", {
+        cache: "no-store"
+      });
+
+      if (response.ok) {
+        return (await response.json()) as VoiceInterviewConfig;
+      }
+    } catch {
+      // Fall through to existing direct/fallback behavior.
+    }
+  }
+
   return requestOrFallback("/voice/interview/config", undefined, async () => {
     await sleep(80);
     return {
@@ -1401,6 +1415,25 @@ export async function getVoiceInterviewConfig(): Promise<VoiceInterviewConfig> {
 export async function startVoiceInterviewConversation(
   input: StartVoiceInterviewConversationInput
 ): Promise<VoiceInterviewConversationState> {
+  if (typeof window !== "undefined") {
+    try {
+      const response = await fetch("/api/voice/interview/sessions/start", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(input),
+        cache: "no-store"
+      });
+
+      if (response.ok) {
+        return (await response.json()) as VoiceInterviewConversationState;
+      }
+    } catch {
+      // Fall through to existing direct/fallback behavior.
+    }
+  }
+
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(120);
     return startMockVoiceConversation(input);
@@ -1417,6 +1450,25 @@ export async function startVoiceInterviewConversation(
 }
 
 export async function synthesizeVoicePrompt(text: string): Promise<Blob | null> {
+  if (typeof window !== "undefined") {
+    try {
+      const response = await fetch("/api/voice/interview/speak", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ text }),
+        cache: "no-store"
+      });
+
+      if (response.ok) {
+        return response.blob();
+      }
+    } catch {
+      return null;
+    }
+  }
+
   if (apiMode !== "live" || !apiBaseUrl) {
     return null;
   }
@@ -1439,6 +1491,33 @@ export async function synthesizeVoicePrompt(text: string): Promise<Blob | null> 
 export async function submitVoiceInterviewTurn(
   input: SubmitVoiceInterviewTurnInput
 ): Promise<VoiceInterviewConversationState> {
+  if (typeof window !== "undefined") {
+    try {
+      const response = await fetch(
+        `/api/voice/interview/sessions/${input.conversationId}/respond`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            transcript: input.transcript,
+            audioBase64: input.audioBase64,
+            mimeType: input.mimeType,
+            fileName: input.fileName
+          }),
+          cache: "no-store"
+        }
+      );
+
+      if (response.ok) {
+        return (await response.json()) as VoiceInterviewConversationState;
+      }
+    } catch {
+      // Fall through to existing direct/fallback behavior.
+    }
+  }
+
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(240);
     return respondMockVoiceConversation(input);
