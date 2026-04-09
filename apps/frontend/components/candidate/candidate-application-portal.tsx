@@ -312,9 +312,9 @@ export function CandidateApplicationPortal({
                   <p className="muted">{result.statusMessage}</p>
                 </div>
                 <span
-                  className={`status-pill ${result.status === "qualified" ? "status-approved" : "status-progress"}`}
+                  className={`status-pill ${result.status === "qualified" ? "status-approved" : "status-stop"}`}
                 >
-                  {result.status === "qualified" ? "Interview invited" : "Under review"}
+                  {result.status === "qualified" ? "Interview invited" : "Not advanced"}
                 </span>
               </div>
               <p className="muted">

@@ -7,6 +7,11 @@ import { candidateInsightsRepository } from "../candidate-insights/candidate-ins
 import { candidatesService } from "../candidates/candidates.service";
 import { jobsRepository } from "../jobs/jobs.repository";
 
+type QualificationGateResult = {
+  passed: boolean;
+  reasons: string[];
+};
+
 export class PublicJobsService {
   async listJobs() {
     return jobsRepository.listPublic();
@@ -76,12 +81,17 @@ export class PublicJobsService {
       }
     });
 
-    const qualificationPassed = this.passesBusinessRules({
-      finalScore: screening.finalScore,
+    const gate = this.evaluateQualificationGate({
+      screening,
       expectedCtc: payload.expectedCtc,
       earliestJoiningDate: payload.earliestJoiningDate,
+      relocation: payload.relocation ?? null,
       job
     });
+    const qualificationPassed = gate.passed;
+    const decisionReason = [screening.reasoningSummary, ...gate.reasons]
+      .filter(Boolean)
+      .join(" ");
 
     const updatedApplication = await applicationsService.createApplication({
       candidateId: candidate.id,
@@ -97,7 +107,7 @@ export class PublicJobsService {
         currency: job.currency ?? "INR",
         relocationWillingness: payload.relocation?.toLowerCase() !== "declined"
       },
-      screeningDecisionReason: screening.reasoningSummary
+      screeningDecisionReason: decisionReason
     });
 
     await candidateInsightsRepository.upsert({
@@ -120,7 +130,7 @@ export class PublicJobsService {
       suggestedManagerQuestions: [],
       hiringRecommendation: qualificationPassed
         ? "Qualified for AI interview based on semantic resume screening."
-        : "Stored for future review after semantic resume screening."
+        : `Interview not unlocked. ${gate.reasons.join(" ")}`
     });
 
     if (!qualificationPassed) {
@@ -129,8 +139,8 @@ export class PublicJobsService {
         candidateId: candidate.id,
         status: "rejected" as const,
         statusMessage:
-          "Application submitted successfully. Our team will review your profile and reach out if there is a fit.",
-        interviewInvitation: null,
+          "Application submitted successfully, but we could not move it to the interview stage.",
+        interviewInvitation: gate.reasons.join(" "),
         interviewQuestions: []
       };
     }
@@ -163,18 +173,50 @@ export class PublicJobsService {
     return job;
   }
 
-  private passesBusinessRules(input: {
-    finalScore: number;
+  private evaluateQualificationGate(input: {
+    screening: {
+      finalScore: number;
+      semanticSimilarity: number;
+    };
     expectedCtc: number;
     earliestJoiningDate: string;
+    relocation: string | null;
     job: Job;
-  }) {
-    const salaryOk = !input.job.salaryMax || input.expectedCtc <= input.job.salaryMax;
+  }): QualificationGateResult {
+    const reasons: string[] = [];
+    const finalScoreOk = input.screening.finalScore >= 70;
+    const similarityOk = input.screening.semanticSimilarity >= 70;
+    const salaryOk = input.job.salaryMax == null || input.expectedCtc <= input.job.salaryMax;
     const joiningDeadlineDays = parseJoiningTimelineDays(input.job.joiningTimeline);
     const daysUntilJoining = differenceInDays(input.earliestJoiningDate);
     const joiningOk = joiningDeadlineDays == null || daysUntilJoining <= joiningDeadlineDays;
+    const relocationOk =
+      !input.job.relocationRequired || input.relocation?.toLowerCase() !== "declined";
 
-    return input.finalScore >= 70 && salaryOk && joiningOk;
+    if (!finalScoreOk) {
+      reasons.push("Resume-to-job match is below the required 70% threshold.");
+    }
+
+    if (!similarityOk) {
+      reasons.push("Semantic alignment with the job description is below the required threshold.");
+    }
+
+    if (!salaryOk) {
+      reasons.push("Expected CTC is outside the approved budget for this role.");
+    }
+
+    if (!joiningOk) {
+      reasons.push("Joining availability is later than the approved hiring window.");
+    }
+
+    if (!relocationOk) {
+      reasons.push("This role requires relocation or location availability that is not currently met.");
+    }
+
+    return {
+      passed: finalScoreOk && similarityOk && salaryOk && joiningOk && relocationOk,
+      reasons
+    };
   }
 }
 
