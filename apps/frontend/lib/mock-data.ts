@@ -1,12 +1,12 @@
 import type {
   ApplicationPortalData,
+  ApplicationSubmissionResult,
   CandidateProfileData,
   DashboardCandidate,
   GeneratedJobDescription,
   HrDashboardData,
   JobIntakeQuestion,
   LandingContent,
-  ScreeningResult
 } from "@/lib/types";
 
 export const landingContent: LandingContent = {
@@ -237,16 +237,14 @@ export const applicationPortalData: ApplicationPortalData = {
   ]
 };
 
-export const screeningResult: ScreeningResult = {
-  resumeScore: 84,
-  resumeAssessment:
-    "Strong overlap in lifecycle, performance marketing, and experimentation leadership for SaaS growth teams.",
-  qualificationResult: "Pass",
-  qualificationReason:
-    "Joining window, salary expectation, and relocation preference all fit the approved hiring constraints.",
-  nextStep: "Advance to AI interview",
+export const screeningResult: ApplicationSubmissionResult = {
+  applicationId: "app-mock-001",
+  candidateId: "cand-mock-001",
+  status: "qualified",
   statusMessage:
-    "Candidate should receive an interview invitation email and a personalized question set.",
+    "Application submitted successfully. You are eligible to continue to the AI interview.",
+  interviewInvitation:
+    "You qualified for the AI interview based on semantic resume screening and business rule checks.",
   interviewQuestions: [
     "How have you improved paid media efficiency while protecting pipeline quality in a SaaS environment?",
     "Walk through an experiment you designed that materially changed conversion rates or CAC.",

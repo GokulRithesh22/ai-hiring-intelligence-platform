@@ -16,10 +16,16 @@ function formatJsonBlock(value: Record<string, unknown> | null | undefined) {
   return JSON.stringify(value, null, 2);
 }
 
+function formatList(value: string[] | undefined, empty = "No highlights recorded yet.") {
+  return value && value.length > 0 ? value.join(" | ") : empty;
+}
+
 export default async function HrCandidatePage({ params }: HrCandidatePageProps) {
   const { candidateId } = await params;
   await requireHrSession(`/hr/candidates/${candidateId}`);
   const profile = await getProtectedHrCandidate(candidateId);
+  const latestScreening = profile.screeningResults[0] ?? null;
+  const candidateScore = profile.insight?.candidateScore ?? null;
 
   return (
     <DashboardShell
@@ -118,22 +124,58 @@ export default async function HrCandidatePage({ params }: HrCandidatePageProps) 
             <section className="overview-panel card stack-lg">
               <div className="panel-heading">
                 <div>
-                  <span className="subtle-label">Resume and LinkedIn insights</span>
-                  <h2>Structured candidate intelligence</h2>
+                  <span className="subtle-label">Resume and screening insights</span>
+                  <h2>Semantic resume match breakdown</h2>
                 </div>
               </div>
 
               <div className="insight-grid">
                 <article className="insight-item">
-                  <strong>Resume insights</strong>
-                  <p className="muted" style={{ whiteSpace: "pre-wrap" }}>
-                    {formatJsonBlock(profile.insight?.resumeAnalysis)}
+                  <strong>Resume match score</strong>
+                  <p className="muted">
+                    {latestScreening ? latestScreening.finalScore : "No semantic screening stored yet."}
                   </p>
                 </article>
                 <article className="insight-item">
-                  <strong>LinkedIn insights</strong>
+                  <strong>Experience alignment</strong>
+                  <p className="muted">
+                    {latestScreening ? latestScreening.experienceMatch : "No alignment score yet."}
+                  </p>
+                </article>
+                <article className="insight-item">
+                  <strong>Skills alignment</strong>
+                  <p className="muted">
+                    {latestScreening ? latestScreening.skillsMatch : "No alignment score yet."}
+                  </p>
+                </article>
+                <article className="insight-item">
+                  <strong>Reasoning summary</strong>
+                  <p className="muted">
+                    {latestScreening?.reasoningSummary ?? "No reasoning summary stored yet."}
+                  </p>
+                </article>
+                <article className="insight-item">
+                  <strong>Strengths</strong>
+                  <p className="muted">
+                    {formatList(latestScreening?.strengths)}
+                  </p>
+                </article>
+                <article className="insight-item">
+                  <strong>Weaknesses</strong>
+                  <p className="muted">
+                    {formatList(latestScreening?.weaknesses)}
+                  </p>
+                </article>
+                <article className="insight-item">
+                  <strong>Structured resume analysis</strong>
                   <p className="muted" style={{ whiteSpace: "pre-wrap" }}>
-                    {formatJsonBlock(profile.insight?.linkedinInsights)}
+                    {formatJsonBlock(latestScreening?.resumeAnalysis)}
+                  </p>
+                </article>
+                <article className="insight-item">
+                  <strong>Structured job analysis</strong>
+                  <p className="muted" style={{ whiteSpace: "pre-wrap" }}>
+                    {formatJsonBlock(latestScreening?.jobAnalysis)}
                   </p>
                 </article>
                 <article className="insight-item">
@@ -152,6 +194,63 @@ export default async function HrCandidatePage({ params }: HrCandidatePageProps) 
                       : "No suggested questions recorded."}
                   </p>
                 </article>
+              </div>
+            </section>
+
+            <section className="question-panel card stack-lg">
+              <div className="panel-heading">
+                <div>
+                  <span className="subtle-label">Candidate scoring engine</span>
+                  <h2>Weighted score and confidence</h2>
+                </div>
+              </div>
+
+              <div className="score-grid">
+                <article className="score-card">
+                  <strong>
+                    {candidateScore?.finalScore != null ? `${candidateScore.finalScore}` : "NA"}
+                  </strong>
+                  <span className="muted">Final score</span>
+                </article>
+                <article className="score-card">
+                  <strong>
+                    {candidateScore?.confidenceScore != null
+                      ? `${Math.round(candidateScore.confidenceScore * 100)}%`
+                      : "NA"}
+                  </strong>
+                  <span className="muted">
+                    {candidateScore?.confidenceLabel ?? "Confidence"}
+                  </span>
+                </article>
+                <article className="score-card">
+                  <strong>{candidateScore?.roleCapability ?? "NA"}</strong>
+                  <span className="muted">Role capability</span>
+                </article>
+                <article className="score-card">
+                  <strong>{candidateScore?.thinkingBehavior ?? "NA"}</strong>
+                  <span className="muted">Thinking & behavior</span>
+                </article>
+                <article className="score-card">
+                  <strong>{candidateScore?.impact ?? "NA"}</strong>
+                  <span className="muted">Impact</span>
+                </article>
+                <article className="score-card">
+                  <strong>{candidateScore?.transferability ?? "NA"}</strong>
+                  <span className="muted">Transferability</span>
+                </article>
+                <article className="score-card">
+                  <strong>{candidateScore?.potential ?? "NA"}</strong>
+                  <span className="muted">Potential</span>
+                </article>
+              </div>
+
+              <div className="summary-chip">
+                <span className="subtle-label">Evidence summary</span>
+                <span className="muted">
+                  {candidateScore?.evidenceSummary.length
+                    ? candidateScore.evidenceSummary.join(" | ")
+                    : "No evidence summary stored yet."}
+                </span>
               </div>
             </section>
 
