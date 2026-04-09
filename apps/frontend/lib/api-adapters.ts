@@ -1306,7 +1306,11 @@ export async function submitCandidateApplication(
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(360);
     const fallbackResult: ApplicationSubmissionResult = {
-      ...mockApplicationSubmissionResult,
+      applicationId: mockApplicationSubmissionResult.applicationId,
+      candidateId: mockApplicationSubmissionResult.candidateId,
+      status: mockApplicationSubmissionResult.status,
+      statusMessage: mockApplicationSubmissionResult.statusMessage,
+      interviewInvitation: mockApplicationSubmissionResult.interviewInvitation,
       interviewQuestions: payload.resumeFile
         ? mockApplicationSubmissionResult.interviewQuestions
         : []
@@ -1343,7 +1347,11 @@ export async function submitCandidateApplication(
     return (await response.json()) as ApplicationSubmissionResult;
   } catch {
     const fallbackResult: ApplicationSubmissionResult = {
-      ...mockApplicationSubmissionResult,
+      applicationId: mockApplicationSubmissionResult.applicationId,
+      candidateId: mockApplicationSubmissionResult.candidateId,
+      status: mockApplicationSubmissionResult.status,
+      statusMessage: mockApplicationSubmissionResult.statusMessage,
+      interviewInvitation: mockApplicationSubmissionResult.interviewInvitation,
       interviewQuestions: payload.resumeFile
         ? mockApplicationSubmissionResult.interviewQuestions
         : []
