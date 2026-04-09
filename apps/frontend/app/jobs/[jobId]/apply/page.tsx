@@ -3,13 +3,13 @@ import { CandidateApplicationPortal } from "@/components/candidate/candidate-app
 import { getApplicationPortal } from "@/lib/api-adapters";
 
 type ApplyPageProps = {
-  params: {
+  params: Promise<{
     jobId: string;
-  };
+  }>;
 };
 
 export default async function ApplyPage({ params }: ApplyPageProps) {
-  const { jobId } = params;
+  const { jobId } = await params;
   const portal = await getApplicationPortal(jobId);
 
   return (
