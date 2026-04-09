@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -49,14 +51,14 @@ async function extractSupabaseAccessToken() {
   return null;
 }
 
-export async function requireHrSession(nextPath = "/hr/dashboard") {
+async function getHrSession() {
   if (!apiBaseUrl) {
-    redirect("/");
+    return null;
   }
 
   const accessToken = await extractSupabaseAccessToken();
   if (!accessToken) {
-    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
+    return null;
   }
 
   const response = await fetch(`${apiBaseUrl}/auth/me`, {
@@ -67,7 +69,7 @@ export async function requireHrSession(nextPath = "/hr/dashboard") {
   });
 
   if (!response.ok) {
-    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
+    return null;
   }
 
   const payload = (await response.json()) as {
@@ -77,10 +79,22 @@ export async function requireHrSession(nextPath = "/hr/dashboard") {
   };
 
   if (!payload.user || !["HR", "ADMIN"].includes(payload.user.role ?? "")) {
-    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
+    return null;
   }
 
   return {
     accessToken
   };
 }
+
+async function requireHrSession(nextPath = "/hr/dashboard") {
+  const session = await getHrSession();
+
+  if (!session) {
+    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
+  }
+
+  return session;
+}
+
+export { getHrSession, requireHrSession };

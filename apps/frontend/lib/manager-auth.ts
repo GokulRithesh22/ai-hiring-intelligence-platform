@@ -1,3 +1,5 @@
+import "server-only";
+
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -53,7 +55,7 @@ async function extractManagerAccessToken() {
   return null;
 }
 
-export async function getManagerSession() {
+async function getManagerSession() {
   if (!apiBaseUrl) {
     return null;
   }
@@ -89,7 +91,7 @@ export async function getManagerSession() {
   };
 }
 
-export async function requireManagerSession(nextPath = "/manager/dashboard") {
+async function requireManagerSession(nextPath = "/manager/dashboard") {
   const session = await getManagerSession();
 
   if (!session) {
@@ -98,3 +100,5 @@ export async function requireManagerSession(nextPath = "/manager/dashboard") {
 
   return session;
 }
+
+export { getManagerSession, requireManagerSession };

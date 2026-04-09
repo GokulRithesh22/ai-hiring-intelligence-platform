@@ -1,3 +1,5 @@
+import "server-only";
+
 import { getCandidateProfile as getFallbackCandidateProfile } from "@/lib/api-adapters";
 import type { CandidateProfileData, HrCandidateDetail } from "@/lib/types";
 import { getHrSession } from "@/lib/hr-auth";

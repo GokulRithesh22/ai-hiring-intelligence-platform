@@ -3,13 +3,10 @@ import { cookies } from "next/headers";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-type RouteContext = {
-  params: {
-    jobId: string;
-  };
-};
-
-export async function POST(request: Request, context: RouteContext) {
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ jobId: string }> }
+) {
   if (!apiBaseUrl) {
     return NextResponse.json({ error: "Backend API is not configured" }, { status: 500 });
   }
@@ -21,7 +18,7 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Manager authentication required" }, { status: 401 });
   }
 
-  const { jobId } = context.params;
+  const { jobId } = await context.params;
   const body = await request.text();
   const response = await fetch(`${apiBaseUrl}/jobs/${jobId}/manager/refine-description`, {
     method: "POST",
