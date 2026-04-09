@@ -325,6 +325,8 @@ export type HrCandidateDetail = {
   }>;
 };
 
+export type ScreeningResult = HrCandidateDetail["screeningResults"][number];
+
 export type HrAnalyticsData = {
   applicationsPerJob: Array<{
     jobId: string;
