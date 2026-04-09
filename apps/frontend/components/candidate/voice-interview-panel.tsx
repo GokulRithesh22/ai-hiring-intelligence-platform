@@ -52,10 +52,19 @@ export function VoiceInterviewPanel({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [audioAvailable, setAudioAvailable] = useState(false);
+  const [playbackFailed, setPlaybackFailed] = useState(false);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const spokenTurnIdsRef = useRef<Set<string>>(new Set());
+  const autoRecordedTurnIdsRef = useRef<Set<string>>(new Set());
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const monitorFrameRef = useRef<number | null>(null);
+  const stopTimeoutRef = useRef<number | null>(null);
+  const speechDetectedRef = useRef(false);
+  const silenceStartedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     void getVoiceInterviewConfig().then(setConfig);
@@ -66,6 +75,7 @@ export function VoiceInterviewPanel({
       if (typeof window !== "undefined" && "speechSynthesis" in window) {
         window.speechSynthesis.cancel();
       }
+      cleanupRecordingMonitoring();
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
@@ -93,7 +103,12 @@ export function VoiceInterviewPanel({
         setStatus(
           turn.kind === "closing" ? "AI is wrapping up the interview..." : "AI is asking the next question..."
         );
-        await playPrompt(turn.text, config);
+        const played = await playPrompt(turn.text, config);
+        setAudioAvailable(played);
+        setPlaybackFailed(!played);
+        if (!played) {
+          setStatus("Question ready. Audio playback was blocked, so use Replay prompt if needed.");
+        }
       }
 
       if (!cancelled) {
@@ -109,18 +124,51 @@ export function VoiceInterviewPanel({
     };
   }, [config, conversation]);
 
+  useEffect(() => {
+    const latestQuestionTurn = [...(conversation?.turns ?? [])]
+      .reverse()
+      .find((turn) => turn.role === "assistant" && turn.kind === "question");
+
+    if (!conversation || conversation.completed || isSpeaking || recording || !latestQuestionTurn) {
+      return;
+    }
+
+    if (autoRecordedTurnIdsRef.current.has(latestQuestionTurn.id)) {
+      return;
+    }
+
+    autoRecordedTurnIdsRef.current.add(latestQuestionTurn.id);
+    const timeout = window.setTimeout(() => {
+      void startRecording();
+    }, 450);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [conversation, isSpeaking, recording]);
+
   const startInterview = () => {
     setError(null);
     setStatus("Starting conversational interview...");
 
     startTransition(async () => {
       try {
+        if (
+          typeof navigator !== "undefined" &&
+          navigator.mediaDevices &&
+          typeof MediaRecorder !== "undefined"
+        ) {
+          const permissionStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          permissionStream.getTracks().forEach((track) => track.stop());
+        }
+
         const nextConversation = await startVoiceInterviewConversation({
           questions,
           interviewSessionId,
           applicationId
         });
         spokenTurnIdsRef.current = new Set();
+        autoRecordedTurnIdsRef.current = new Set();
         setConversation(nextConversation);
         setStatus(nextConversation.status);
       } catch (caughtError) {
@@ -160,9 +208,12 @@ export function VoiceInterviewPanel({
         window.speechSynthesis.cancel();
       }
 
+      cleanupRecordingMonitoring();
       const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = mediaStream;
       chunksRef.current = [];
+      speechDetectedRef.current = false;
+      silenceStartedAtRef.current = null;
 
       const recorder = new MediaRecorder(mediaStream);
       recorderRef.current = recorder;
@@ -179,6 +230,10 @@ export function VoiceInterviewPanel({
             setStatus("Transcribing and analyzing your answer...");
             const mimeType = recorder.mimeType || "audio/webm";
             const blob = new Blob(chunksRef.current, { type: mimeType });
+            if (blob.size === 0) {
+              setStatus("No answer was detected. Please try responding again.");
+              return;
+            }
             const audioBase64 = await blobToBase64(blob);
             const nextConversation = await submitVoiceInterviewTurn({
               conversationId: conversation.conversationId,
@@ -197,6 +252,7 @@ export function VoiceInterviewPanel({
             );
             setStatus("We couldn't process that answer. Please try again.");
           } finally {
+            cleanupRecordingMonitoring();
             setRecording(false);
             streamRef.current?.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
@@ -206,8 +262,9 @@ export function VoiceInterviewPanel({
       };
 
       recorder.start();
+      beginSilenceMonitoring(mediaStream, recorder);
       setRecording(true);
-      setStatus("Listening...");
+      setStatus("Listening... answer naturally and pause when you are done.");
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : "Microphone access was not granted."
@@ -219,6 +276,115 @@ export function VoiceInterviewPanel({
   const stopRecording = () => {
     recorderRef.current?.stop();
     setRecording(false);
+  };
+
+  const replayPrompt = () => {
+    if (!conversation?.currentPrompt) {
+      return;
+    }
+
+    setError(null);
+    startTransition(async () => {
+      setIsSpeaking(true);
+      setStatus("Playing the current question...");
+      const played = await playPrompt(conversation.currentPrompt, config);
+      setIsSpeaking(false);
+      setAudioAvailable(played);
+      setPlaybackFailed(!played);
+      setStatus(
+        played
+          ? "Question replayed. You can answer now."
+          : "Question ready. Audio playback was blocked, but you can still read and answer."
+      );
+    });
+  };
+
+  const cleanupRecordingMonitoring = () => {
+    if (typeof window !== "undefined" && monitorFrameRef.current != null) {
+      window.cancelAnimationFrame(monitorFrameRef.current);
+      monitorFrameRef.current = null;
+    }
+
+    if (typeof window !== "undefined" && stopTimeoutRef.current != null) {
+      window.clearTimeout(stopTimeoutRef.current);
+      stopTimeoutRef.current = null;
+    }
+
+    analyserRef.current = null;
+
+    if (audioContextRef.current) {
+      void audioContextRef.current.close().catch(() => undefined);
+      audioContextRef.current = null;
+    }
+  };
+
+  const beginSilenceMonitoring = (stream: MediaStream, recorder: MediaRecorder) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const AudioContextCtor =
+      window.AudioContext ??
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextCtor) {
+      stopTimeoutRef.current = window.setTimeout(() => {
+        if (recorder.state !== "inactive") {
+          recorder.stop();
+        }
+      }, 15000);
+      return;
+    }
+
+    const audioContext = new AudioContextCtor();
+    const analyser = audioContext.createAnalyser();
+    analyser.fftSize = 2048;
+
+    const source = audioContext.createMediaStreamSource(stream);
+    source.connect(analyser);
+
+    audioContextRef.current = audioContext;
+    analyserRef.current = analyser;
+    stopTimeoutRef.current = window.setTimeout(() => {
+      if (recorder.state !== "inactive") {
+        recorder.stop();
+      }
+    }, 30000);
+
+    const sampleBuffer = new Uint8Array(analyser.fftSize);
+    const silenceThreshold = 0.02;
+    const silenceDurationMs = 1500;
+
+    const monitor = () => {
+      if (recorder.state === "inactive" || !analyserRef.current) {
+        return;
+      }
+
+      analyserRef.current.getByteTimeDomainData(sampleBuffer);
+      let sumSquares = 0;
+      for (const sample of sampleBuffer) {
+        const normalized = (sample - 128) / 128;
+        sumSquares += normalized * normalized;
+      }
+
+      const rms = Math.sqrt(sumSquares / sampleBuffer.length);
+      const now = performance.now();
+
+      if (rms > silenceThreshold) {
+        speechDetectedRef.current = true;
+        silenceStartedAtRef.current = null;
+      } else if (speechDetectedRef.current) {
+        if (silenceStartedAtRef.current == null) {
+          silenceStartedAtRef.current = now;
+        } else if (now - silenceStartedAtRef.current >= silenceDurationMs) {
+          recorder.stop();
+          return;
+        }
+      }
+
+      monitorFrameRef.current = window.requestAnimationFrame(monitor);
+    };
+
+    monitorFrameRef.current = window.requestAnimationFrame(monitor);
   };
 
   return (
@@ -252,7 +418,11 @@ export function VoiceInterviewPanel({
           <span className="subtle-label">Current mode</span>
           <strong>{recording ? "Recording" : isSpeaking ? "AI speaking" : "Awaiting candidate"}</strong>
           <span className="muted">
-            {conversation?.currentPrompt ? "AI prompt already delivered" : "Start the loop to begin"}
+            {conversation?.currentPrompt
+              ? recording
+                ? "Mic is open and listening for your answer"
+                : "The AI prompt is active and the call flow continues automatically"
+              : "Start the loop to begin"}
           </span>
         </article>
         <article>
@@ -310,27 +480,29 @@ export function VoiceInterviewPanel({
           </div>
 
           <div className="shell-actions">
+            {playbackFailed && conversation.currentPrompt ? (
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={replayPrompt}
+                disabled={isPending || recording || isSpeaking}
+              >
+                Replay prompt
+              </button>
+            ) : null}
             {conversation.completed ? (
               <button className="button button-primary" type="button" onClick={startInterview}>
                 Restart interview
               </button>
-            ) : !recording ? (
-              <button
-                className="button button-primary"
-                type="button"
-                onClick={startRecording}
-                disabled={isSpeaking}
-              >
-                {isSpeaking ? "Waiting for AI..." : "Start speaking"}
-              </button>
             ) : (
-              <button className="button button-primary" type="button" onClick={stopRecording}>
-                Finish answer
+              <button className="button button-secondary" type="button" onClick={stopRecording}>
+                End answer now
               </button>
             )}
             <span className="muted">
-              There is no manual next-question flow here. The AI advances and follows up
-              automatically based on your last answer.
+              {playbackFailed
+                ? "The interview runs automatically. Replay prompt is only shown when browser audio playback is blocked."
+                : "Once the interview starts, the AI speaks, listens, and advances automatically like a phone conversation."}
             </span>
           </div>
 
@@ -386,34 +558,39 @@ export function VoiceInterviewPanel({
 async function playPrompt(text: string, config: VoiceInterviewConfig | null) {
   const audioBlob = await synthesizeVoicePrompt(text);
   if (audioBlob) {
-    await new Promise<void>((resolve) => {
+    const played = await new Promise<boolean>((resolve) => {
       const url = URL.createObjectURL(audioBlob);
       const audio = new Audio(url);
       audio.onended = () => {
         URL.revokeObjectURL(url);
-        resolve();
+        resolve(true);
       };
       audio.onerror = () => {
         URL.revokeObjectURL(url);
-        resolve();
+        resolve(false);
       };
-      void audio.play().catch(() => resolve());
+      void audio.play().catch(() => {
+        URL.revokeObjectURL(url);
+        resolve(false);
+      });
     });
-    return;
+    return played;
   }
 
   if (typeof window !== "undefined" && "speechSynthesis" in window) {
-    await new Promise<void>((resolve) => {
+    await new Promise<boolean>((resolve) => {
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.onend = () => resolve();
-      utterance.onerror = () => resolve();
+      utterance.onend = () => resolve(true);
+      utterance.onerror = () => resolve(false);
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utterance);
     });
-    return;
+    return true;
   }
 
   if (!config?.enabled) {
     await Promise.resolve();
   }
+
+  return false;
 }
