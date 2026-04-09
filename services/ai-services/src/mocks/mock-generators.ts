@@ -328,7 +328,11 @@ export function createMockInterviewEvaluationResult(input: InterviewEvaluationIn
       score,
       rationale: wordCount >= 45
         ? "Answer provides enough detail to evaluate reasoning and outcomes."
-        : "Answer is brief and should be probed further for specifics."
+        : "Answer is brief and should be probed further for specifics.",
+      evidence:
+        wordCount >= 45
+          ? ["Candidate provided a sufficiently detailed mock response for evaluation."]
+          : ["Response lacked enough detail and would need follow-up in a real interview."]
     };
   });
 
