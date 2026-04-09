@@ -200,9 +200,7 @@ export function CandidateApplicationPortal({
           >
             {isPending ? "Running screening..." : "Submit application"}
           </button>
-          <span className="muted">
-            Your resume is analyzed semantically. Internal scoring is hidden from candidates.
-          </span>
+          <span className="muted">Your resume is analyzed against the role requirements.</span>
         </div>
 
         {!result ? null : (
