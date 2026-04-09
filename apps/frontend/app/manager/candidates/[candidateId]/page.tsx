@@ -1,6 +1,6 @@
 import { CandidateIntelligencePage } from "@/components/candidate/candidate-intelligence-page";
 import { ManagerShell } from "@/components/manager/manager-shell";
-import { getCandidateProfile } from "@/lib/api-adapters";
+import { getProtectedCandidateProfile } from "@/lib/candidate-profile-server";
 import { requireManagerSession } from "@/lib/manager-auth";
 
 type ManagerCandidatePageProps = {
@@ -12,7 +12,7 @@ type ManagerCandidatePageProps = {
 export default async function ManagerCandidatePage({ params }: ManagerCandidatePageProps) {
   const { candidateId } = await params;
   await requireManagerSession(`/manager/candidates/${candidateId}`);
-  const profile = await getCandidateProfile(candidateId);
+  const profile = await getProtectedCandidateProfile(candidateId);
 
   return (
     <ManagerShell

@@ -1,6 +1,6 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { CandidateIntelligencePage } from "@/components/candidate/candidate-intelligence-page";
-import { getCandidateProfile } from "@/lib/api-adapters";
+import { getProtectedCandidateProfile } from "@/lib/candidate-profile-server";
 
 type CandidatePageProps = {
   params: Promise<{
@@ -10,7 +10,7 @@ type CandidatePageProps = {
 
 export default async function CandidatePage({ params }: CandidatePageProps) {
   const { candidateId } = await params;
-  const profile = await getCandidateProfile(candidateId);
+  const profile = await getProtectedCandidateProfile(candidateId);
 
   return (
     <DashboardShell

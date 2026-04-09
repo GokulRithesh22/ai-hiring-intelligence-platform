@@ -1345,44 +1345,6 @@ export async function submitCandidateApplication(
 export async function getCandidateProfile(
   candidateId: string
 ): Promise<CandidateProfileData> {
-  if (apiMode === "live" && apiBaseUrl) {
-    try {
-      const { getManagerSession } = await import("@/lib/manager-auth");
-      const managerSession = await getManagerSession();
-      if (managerSession) {
-        const response = await fetch(`${apiBaseUrl}/candidates/${candidateId}/intelligence`, {
-          headers: {
-            Authorization: `Bearer ${managerSession.accessToken}`
-          },
-          cache: "no-store"
-        });
-
-        if (response.ok) {
-          const profile = (await response.json()) as HrCandidateDetail;
-          return mapHrCandidateDetailToCandidateProfile(profile);
-        }
-      }
-
-      const { getHrSession } = await import("@/lib/hr-auth");
-      const session = await getHrSession();
-      if (session) {
-        const response = await fetch(`${apiBaseUrl}/hr/candidates/${candidateId}`, {
-          headers: {
-            Authorization: `Bearer ${session.accessToken}`
-          },
-          cache: "no-store"
-        });
-
-        if (response.ok) {
-          const profile = (await response.json()) as HrCandidateDetail;
-          return mapHrCandidateDetailToCandidateProfile(profile);
-        }
-      }
-    } catch {
-      // Fall back to the existing demo profile if an internal session is not present.
-    }
-  }
-
   return requestOrFallback(`/candidates/${candidateId}`, undefined, async () => {
     await sleep(180);
     return {
