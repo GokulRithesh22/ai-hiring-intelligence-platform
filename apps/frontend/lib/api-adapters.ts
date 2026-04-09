@@ -1249,18 +1249,22 @@ export async function getHrDashboard(
 }
 
 export async function getApplicationPortal(jobId: string): Promise<ApplicationPortalData> {
-  return requestOrFallback<ApplicationPortalData | Record<string, unknown>>(`/public/jobs/${jobId}`, undefined, async () => {
-    await sleep(140);
-    return {
-      ...applicationPortalData,
-      job: {
-        ...applicationPortalData.job,
-        id: jobId
-      }
-    };
-  }).then((payload) => {
+  return requestOrFallback<ApplicationPortalData | Record<string, unknown>>(
+    `/public/jobs/${jobId}`,
+    undefined,
+    async () => {
+      await sleep(140);
+      return {
+        ...applicationPortalData,
+        job: {
+          ...applicationPortalData.job,
+          id: jobId
+        }
+      };
+    }
+  ).then((payload): ApplicationPortalData => {
     if ("job" in payload && "pipeline" in payload) {
-      return payload;
+      return payload as ApplicationPortalData;
     }
 
     const job = payload as {
