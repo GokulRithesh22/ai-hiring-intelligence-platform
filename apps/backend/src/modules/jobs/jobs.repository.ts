@@ -278,7 +278,7 @@ export class JobsRepository {
     currency: string | null;
     joiningTimeline: string | null;
     relocationRequired: boolean;
-    generatedDescription: string;
+    generatedDescription: string | null;
   }>): Promise<Job | null> {
     const result = await query<JobRow>(
       `
