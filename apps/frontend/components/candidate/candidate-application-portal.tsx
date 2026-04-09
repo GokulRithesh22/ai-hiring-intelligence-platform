@@ -31,17 +31,25 @@ export function CandidateApplicationPortal({
   const [result, setResult] = useState<ApplicationSubmissionResult | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [touchedFields, setTouchedFields] = useState<Record<string, boolean>>({});
   const [isPending, startTransition] = useTransition();
 
-  const isFormComplete =
-    form.fullName.trim().length > 1 &&
-    form.email.trim().length > 3 &&
-    (form.phone?.trim().length ?? 0) > 3 &&
-    (form.linkedInUrl?.trim().length ?? 0) > 3 &&
-    form.earliestJoiningDate.trim().length > 0 &&
-    form.expectedCtc.trim().length > 0 &&
-    form.relocation.trim().length > 0 &&
-    form.resumeFile !== null;
+  const fieldErrors = {
+    fullName: form.fullName.trim().length > 1 ? null : "Full name is required.",
+    email: form.email.trim().length > 3 ? null : "Email is required.",
+    phone: (form.phone?.trim().length ?? 0) > 3 ? null : "Phone is required.",
+    linkedInUrl:
+      (form.linkedInUrl?.trim().length ?? 0) > 3 ? null : "LinkedIn URL is required.",
+    earliestJoiningDate:
+      form.earliestJoiningDate.trim().length > 0 ? null : "Earliest joining date is required.",
+    expectedCtc:
+      form.expectedCtc.trim().length > 0 ? null : "Expected CTC is required.",
+    relocation:
+      form.relocation.trim().length > 0 ? null : "Relocation willingness is required.",
+    resumeFile: form.resumeFile ? null : "Resume upload is required."
+  };
+
+  const isFormComplete = Object.values(fieldErrors).every((error) => error === null);
 
   const updateField = <K extends keyof CandidateApplicationPayload>(
     field: K,
@@ -51,11 +59,32 @@ export function CandidateApplicationPortal({
       ...current,
       [field]: value
     }));
+    setTouchedFields((current) => ({
+      ...current,
+      [field]: true
+    }));
+  };
+
+  const markFieldTouched = (field: keyof CandidateApplicationPayload | "resumeFile") => {
+    setTouchedFields((current) => ({
+      ...current,
+      [field]: true
+    }));
   };
 
   const handleSubmit = () => {
     if (!isFormComplete) {
       setValidationMessage("Complete every required field before continuing.");
+      setTouchedFields({
+        fullName: true,
+        email: true,
+        phone: true,
+        linkedInUrl: true,
+        earliestJoiningDate: true,
+        expectedCtc: true,
+        relocation: true,
+        resumeFile: true
+      });
       return;
     }
 
@@ -124,79 +153,107 @@ export function CandidateApplicationPortal({
         </div>
 
         <div className="form-grid">
-          <label className="field">
-            <span>Full name</span>
+          <label className={`field ${touchedFields.fullName && fieldErrors.fullName ? "field-error" : ""}`}>
+            <span>Full name *</span>
             <input
               required
               placeholder="Enter your full name"
               value={form.fullName}
               onChange={(event) => updateField("fullName", event.target.value)}
+              onBlur={() => markFieldTouched("fullName")}
             />
+            {touchedFields.fullName && fieldErrors.fullName ? (
+              <span className="field-error-text">{fieldErrors.fullName}</span>
+            ) : null}
           </label>
-          <label className="field">
-            <span>Email</span>
+          <label className={`field ${touchedFields.email && fieldErrors.email ? "field-error" : ""}`}>
+            <span>Email *</span>
             <input
               type="email"
               required
               placeholder="Enter your email"
               value={form.email}
               onChange={(event) => updateField("email", event.target.value)}
+              onBlur={() => markFieldTouched("email")}
             />
+            {touchedFields.email && fieldErrors.email ? (
+              <span className="field-error-text">{fieldErrors.email}</span>
+            ) : null}
           </label>
-          <label className="field">
-            <span>Phone</span>
+          <label className={`field ${touchedFields.phone && fieldErrors.phone ? "field-error" : ""}`}>
+            <span>Phone *</span>
             <input
               required
               placeholder="Enter your phone number"
               value={form.phone ?? ""}
               onChange={(event) => updateField("phone", event.target.value)}
+              onBlur={() => markFieldTouched("phone")}
             />
+            {touchedFields.phone && fieldErrors.phone ? (
+              <span className="field-error-text">{fieldErrors.phone}</span>
+            ) : null}
           </label>
-          <label className="field">
-            <span>LinkedIn URL</span>
+          <label className={`field ${touchedFields.linkedInUrl && fieldErrors.linkedInUrl ? "field-error" : ""}`}>
+            <span>LinkedIn URL *</span>
             <input
               type="url"
               required
               placeholder="https://linkedin.com/in/username"
               value={form.linkedInUrl ?? ""}
               onChange={(event) => updateField("linkedInUrl", event.target.value)}
+              onBlur={() => markFieldTouched("linkedInUrl")}
             />
+            {touchedFields.linkedInUrl && fieldErrors.linkedInUrl ? (
+              <span className="field-error-text">{fieldErrors.linkedInUrl}</span>
+            ) : null}
           </label>
-          <label className="field">
-            <span>Earliest joining date</span>
+          <label className={`field ${touchedFields.earliestJoiningDate && fieldErrors.earliestJoiningDate ? "field-error" : ""}`}>
+            <span>Earliest joining date *</span>
             <input
               type="date"
               required
               value={form.earliestJoiningDate}
               onChange={(event) => updateField("earliestJoiningDate", event.target.value)}
+              onBlur={() => markFieldTouched("earliestJoiningDate")}
             />
+            {touchedFields.earliestJoiningDate && fieldErrors.earliestJoiningDate ? (
+              <span className="field-error-text">{fieldErrors.earliestJoiningDate}</span>
+            ) : null}
           </label>
-          <label className="field">
-            <span>Expected CTC</span>
+          <label className={`field ${touchedFields.expectedCtc && fieldErrors.expectedCtc ? "field-error" : ""}`}>
+            <span>Expected CTC *</span>
             <input
               required
               placeholder="Enter expected CTC"
               value={form.expectedCtc}
               onChange={(event) => updateField("expectedCtc", event.target.value)}
+              onBlur={() => markFieldTouched("expectedCtc")}
             />
+            {touchedFields.expectedCtc && fieldErrors.expectedCtc ? (
+              <span className="field-error-text">{fieldErrors.expectedCtc}</span>
+            ) : null}
           </label>
-          <label className="field">
-            <span>Relocation willingness</span>
+          <label className={`field ${touchedFields.relocation && fieldErrors.relocation ? "field-error" : ""}`}>
+            <span>Relocation willingness *</span>
             <select
               required
               value={form.relocation}
               onChange={(event) => updateField("relocation", event.target.value)}
+              onBlur={() => markFieldTouched("relocation")}
             >
               <option value="">Select an option</option>
               <option value="Open">Open</option>
               <option value="Not needed">Not needed</option>
               <option value="Declined">Declined</option>
             </select>
+            {touchedFields.relocation && fieldErrors.relocation ? (
+              <span className="field-error-text">{fieldErrors.relocation}</span>
+            ) : null}
           </label>
         </div>
 
-        <label className="dropzone">
-          <span>Resume upload</span>
+        <label className={`dropzone ${touchedFields.resumeFile && fieldErrors.resumeFile ? "field-error" : ""}`}>
+          <span>Resume upload *</span>
           <span className="muted">
             Supported formats: PDF, DOCX, and TXT.
           </span>
@@ -207,10 +264,14 @@ export function CandidateApplicationPortal({
             onChange={(event) =>
               updateField("resumeFile", event.target.files?.[0] ?? null)
             }
+            onBlur={() => markFieldTouched("resumeFile")}
           />
           <span className="muted">
             {form.resumeFile ? `Attached: ${form.resumeFile.name}` : "No file selected yet"}
           </span>
+          {touchedFields.resumeFile && fieldErrors.resumeFile ? (
+            <span className="field-error-text">{fieldErrors.resumeFile}</span>
+          ) : null}
         </label>
 
         <div className="shell-actions">

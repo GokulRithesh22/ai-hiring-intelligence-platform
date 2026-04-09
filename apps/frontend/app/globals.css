@@ -592,6 +592,17 @@ button {
   padding: 14px 16px;
 }
 
+.field-error {
+  border-color: rgba(214, 69, 69, 0.35);
+  background: rgba(214, 69, 69, 0.05);
+}
+
+.field-error-text {
+  color: var(--color-danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
 .field input,
 .field textarea,
 .field select,
