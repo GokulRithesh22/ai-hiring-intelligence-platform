@@ -40,8 +40,10 @@ import type {
   VoiceTranscriptionResult
 } from "@/lib/types";
 
-const apiMode = process.env.NEXT_PUBLIC_API_MODE ?? "mock";
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+const apiMode =
+  process.env.NEXT_PUBLIC_API_MODE ??
+  (apiBaseUrl ? "live" : "mock");
 const fallbackApplicationSubmissionResult: ApplicationSubmissionResult = {
   applicationId: "app-mock-001",
   candidateId: "cand-mock-001",
