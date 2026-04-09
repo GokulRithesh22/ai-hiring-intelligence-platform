@@ -3,7 +3,7 @@ import { getProtectedHrAnalytics } from "@/lib/hr-api";
 import { requireHrSession } from "@/lib/hr-auth";
 
 export default async function HrAnalyticsPage() {
-  await requireHrSession();
+  await requireHrSession("/hr/analytics");
   const analytics = await getProtectedHrAnalytics();
 
   return (

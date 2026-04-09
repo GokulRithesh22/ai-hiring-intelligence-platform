@@ -49,14 +49,14 @@ async function extractSupabaseAccessToken() {
   return null;
 }
 
-export async function requireHrSession() {
+export async function requireHrSession(nextPath = "/hr/dashboard") {
   if (!apiBaseUrl) {
     redirect("/");
   }
 
   const accessToken = await extractSupabaseAccessToken();
   if (!accessToken) {
-    redirect("/");
+    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   const response = await fetch(`${apiBaseUrl}/auth/me`, {
@@ -67,7 +67,7 @@ export async function requireHrSession() {
   });
 
   if (!response.ok) {
-    redirect("/");
+    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   const payload = (await response.json()) as {
@@ -77,7 +77,7 @@ export async function requireHrSession() {
   };
 
   if (!payload.user || !["HR", "ADMIN"].includes(payload.user.role ?? "")) {
-    redirect("/");
+    redirect(`/hr/login?next=${encodeURIComponent(nextPath)}`);
   }
 
   return {

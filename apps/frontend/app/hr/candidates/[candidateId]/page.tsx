@@ -17,8 +17,8 @@ function formatJsonBlock(value: Record<string, unknown> | null | undefined) {
 }
 
 export default async function HrCandidatePage({ params }: HrCandidatePageProps) {
-  await requireHrSession();
   const { candidateId } = await params;
+  await requireHrSession(`/hr/candidates/${candidateId}`);
   const profile = await getProtectedHrCandidate(candidateId);
 
   return (

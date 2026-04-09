@@ -13,7 +13,7 @@ function formatDate(value: string) {
 }
 
 export default async function HrJobsPage() {
-  await requireHrSession();
+  await requireHrSession("/hr/jobs");
   const jobs = await getProtectedHrJobs();
 
   return (

@@ -17,7 +17,7 @@ function formatDate(value: string | null) {
 }
 
 export default async function HrCandidatesPage() {
-  await requireHrSession();
+  await requireHrSession("/hr/candidates");
   const candidates = await getProtectedHrCandidates();
 
   return (

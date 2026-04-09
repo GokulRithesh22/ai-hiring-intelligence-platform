@@ -5,7 +5,7 @@ import { getProtectedHrCandidates } from "@/lib/hr-api";
 import { requireHrSession } from "@/lib/hr-auth";
 
 export default async function HrInterviewsPage() {
-  await requireHrSession();
+  await requireHrSession("/hr/interviews");
   const candidates = await getProtectedHrCandidates();
   const interviewCandidates = candidates.filter(
     (candidate) =>

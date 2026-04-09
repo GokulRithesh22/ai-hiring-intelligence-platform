@@ -4,7 +4,7 @@ import { getProtectedHrDashboard } from "@/lib/hr-api";
 import { requireHrSession } from "@/lib/hr-auth";
 
 export default async function HrDashboardPage() {
-  await requireHrSession();
+  await requireHrSession("/hr/dashboard");
   const data = await getProtectedHrDashboard();
 
   return (

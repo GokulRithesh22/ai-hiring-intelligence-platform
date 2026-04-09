@@ -14,6 +14,9 @@ export function TopNav() {
         <Link className="button button-ghost" href="/hr/dashboard">
           HR Dashboard
         </Link>
+        <Link className="button button-ghost" href="/hr/login">
+          HR Login
+        </Link>
         <Link className="button button-ghost" href="/hr/jobs">
           HR Jobs
         </Link>
