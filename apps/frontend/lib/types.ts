@@ -232,6 +232,8 @@ export type HrJobApplicationItem = {
   candidateEmail: string;
   resumeScore: number | null;
   interviewScore: number | null;
+  candidateScore: number | null;
+  candidateScoreConfidenceLabel: string | null;
   joiningTimeline: string | null;
   salaryExpectation: number | null;
   relocation: boolean | null;
@@ -264,6 +266,8 @@ export type HrCandidateListItem = {
   latestApplicationStatus: string | null;
   resumeScore: number | null;
   interviewScore: number | null;
+  candidateScore: number | null;
+  candidateScoreConfidenceLabel: string | null;
   appliedAt: string | null;
 };
 
@@ -309,6 +313,8 @@ export type HrCandidateDetail = {
     appliedAt: string;
     resumeScore: number | null;
     interviewScore: number | null;
+    candidateScore?: number | null;
+    candidateScoreConfidenceLabel?: string | null;
   }>;
   interviews: Array<{
     id: string;
