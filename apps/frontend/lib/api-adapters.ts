@@ -151,8 +151,13 @@ function filterCandidates(filters: DashboardFilters): DashboardCandidate[] {
   });
 }
 
-export async function getHrDashboard(filters: DashboardFilters): Promise<HrDashboardData> {
-  const query = new URLSearchParams(filters).toString();
+export async function getHrDashboard(
+  filters: DashboardFilters = {}
+): Promise<HrDashboardData> {
+  const queryFilters = Object.fromEntries(
+    Object.entries(filters).filter((entry): entry is [string, string] => Boolean(entry[1]))
+  );
+  const query = new URLSearchParams(queryFilters).toString();
 
   return requestOrFallback(`/hr/dashboard?${query}`, undefined, async () => {
     await sleep(160);

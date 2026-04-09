@@ -82,12 +82,12 @@ export type DashboardCandidate = {
 };
 
 export type DashboardFilters = {
-  resumeScoreMin: string;
-  interviewScoreMin: string;
-  joiningTimeline: string;
-  salaryMax: string;
-  relocation: string;
-  status: string;
+  resumeScoreMin?: string;
+  interviewScoreMin?: string;
+  joiningTimeline?: string;
+  salaryMax?: string;
+  relocation?: string;
+  status?: string;
 };
 
 export type HrDashboardData = {
