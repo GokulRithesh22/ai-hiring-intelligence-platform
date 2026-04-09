@@ -19,3 +19,18 @@ export function toNumber(value: unknown): number | null {
 
   return typeof value === "number" ? value : Number(value);
 }
+
+export function getRouteParam(
+  value: string | string[] | undefined,
+  name: string
+): string {
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+
+  if (Array.isArray(value) && value[0]) {
+    return value[0];
+  }
+
+  throw new ApiError(400, `Missing route parameter: ${name}`);
+}

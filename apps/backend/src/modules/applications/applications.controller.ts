@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { asyncHandler } from "../../lib/http";
-import { parsePayload } from "../../lib/validation";
+import { getRouteParam, parsePayload } from "../../lib/validation";
 import { applicationsService } from "./applications.service";
 
 const createApplicationSchema = z.object({
@@ -34,7 +34,11 @@ export const applicationsController = {
   }),
 
   getApplication: asyncHandler(async (request, response) => {
-    response.json(await applicationsService.getApplication(request.params.applicationId));
+    response.json(
+      await applicationsService.getApplication(
+        getRouteParam(request.params.applicationId, "applicationId")
+      )
+    );
   }),
 
   createApplication: asyncHandler(async (request, response) => {
@@ -43,25 +47,42 @@ export const applicationsController = {
   }),
 
   screenResume: asyncHandler(async (request, response) => {
-    response.json(await applicationsService.screenResume(request.params.applicationId));
+    response.json(
+      await applicationsService.screenResume(
+        getRouteParam(request.params.applicationId, "applicationId")
+      )
+    );
   }),
 
   evaluateQualification: asyncHandler(async (request, response) => {
     const payload = parsePayload(qualificationSchema, request.body);
     response.json(
-      await applicationsService.evaluateQualification(request.params.applicationId, payload)
+      await applicationsService.evaluateQualification(
+        getRouteParam(request.params.applicationId, "applicationId"),
+        payload
+      )
     );
   }),
 
   startInterview: asyncHandler(async (request, response) => {
-    response.status(201).json(await applicationsService.startInterview(request.params.applicationId));
+    response.status(201).json(
+      await applicationsService.startInterview(
+        getRouteParam(request.params.applicationId, "applicationId")
+      )
+    );
   }),
 
   shortlist: asyncHandler(async (request, response) => {
-    response.json(await applicationsService.shortlist(request.params.applicationId));
+    response.json(
+      await applicationsService.shortlist(
+        getRouteParam(request.params.applicationId, "applicationId")
+      )
+    );
   }),
 
   reject: asyncHandler(async (request, response) => {
-    response.json(await applicationsService.reject(request.params.applicationId));
+    response.json(
+      await applicationsService.reject(getRouteParam(request.params.applicationId, "applicationId"))
+    );
   })
 };

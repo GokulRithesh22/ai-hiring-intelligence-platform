@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { asyncHandler } from "../../lib/http";
-import { parsePayload } from "../../lib/validation";
+import { getRouteParam, parsePayload } from "../../lib/validation";
 import { publicJobsService } from "./public-jobs.service";
 
 const publicApplySchema = z.object({
@@ -18,11 +18,13 @@ export const publicJobsController = {
   }),
 
   getJob: asyncHandler(async (request, response) => {
-    response.json(await publicJobsService.getJob(request.params.jobId));
+    response.json(await publicJobsService.getJob(getRouteParam(request.params.jobId, "jobId")));
   }),
 
   apply: asyncHandler(async (request, response) => {
     const payload = parsePayload(publicApplySchema, request.body);
-    response.status(201).json(await publicJobsService.apply(request.params.jobId, payload));
+    response.status(201).json(
+      await publicJobsService.apply(getRouteParam(request.params.jobId, "jobId"), payload)
+    );
   })
 };

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { asyncHandler } from "../../lib/http";
-import { parsePayload } from "../../lib/validation";
+import { getRouteParam, parsePayload } from "../../lib/validation";
 import { candidatesService } from "./candidates.service";
 
 const createCandidateSchema = z.object({
@@ -22,7 +22,9 @@ export const candidatesController = {
   }),
 
   getCandidate: asyncHandler(async (request, response) => {
-    response.json(await candidatesService.getCandidate(request.params.candidateId));
+    response.json(
+      await candidatesService.getCandidate(getRouteParam(request.params.candidateId, "candidateId"))
+    );
   }),
 
   createCandidate: asyncHandler(async (request, response) => {

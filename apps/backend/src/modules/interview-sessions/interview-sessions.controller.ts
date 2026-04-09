@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { asyncHandler } from "../../lib/http";
-import { parsePayload } from "../../lib/validation";
+import { getRouteParam, parsePayload } from "../../lib/validation";
 import { interviewSessionsService } from "./interview-sessions.service";
 
 const completeSessionSchema = z.object({
@@ -21,11 +21,18 @@ const completeSessionSchema = z.object({
 
 export const interviewSessionsController = {
   getSession: asyncHandler(async (request, response) => {
-    response.json(await interviewSessionsService.getSession(request.params.sessionId));
+    response.json(
+      await interviewSessionsService.getSession(getRouteParam(request.params.sessionId, "sessionId"))
+    );
   }),
 
   completeSession: asyncHandler(async (request, response) => {
     const payload = parsePayload(completeSessionSchema, request.body);
-    response.json(await interviewSessionsService.completeSession(request.params.sessionId, payload));
+    response.json(
+      await interviewSessionsService.completeSession(
+        getRouteParam(request.params.sessionId, "sessionId"),
+        payload
+      )
+    );
   })
 };

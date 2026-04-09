@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { asyncHandler } from "../../lib/http";
-import { parsePayload } from "../../lib/validation";
+import { getRouteParam, parsePayload } from "../../lib/validation";
 import { authService } from "../auth/auth.service";
 import { jobsService } from "./jobs.service";
 
@@ -35,7 +35,7 @@ export const jobsController = {
   }),
 
   getJobById: asyncHandler(async (request, response) => {
-    response.json(await jobsService.getJobById(request.params.jobId));
+    response.json(await jobsService.getJobById(getRouteParam(request.params.jobId, "jobId")));
   }),
 
   createJob: asyncHandler(async (request, response) => {
@@ -66,14 +66,20 @@ export const jobsController = {
       request.body
     );
 
-    response.json(await jobsService.saveIntake(request.params.jobId, payload.answers));
+    response.json(
+      await jobsService.saveIntake(getRouteParam(request.params.jobId, "jobId"), payload.answers)
+    );
   }),
 
   generateDescription: asyncHandler(async (request, response) => {
-    response.json(await jobsService.generateDescription(request.params.jobId));
+    response.json(
+      await jobsService.generateDescription(getRouteParam(request.params.jobId, "jobId"))
+    );
   }),
 
   submitForApproval: asyncHandler(async (request, response) => {
-    response.json(await jobsService.submitForApproval(request.params.jobId));
+    response.json(
+      await jobsService.submitForApproval(getRouteParam(request.params.jobId, "jobId"))
+    );
   })
 };

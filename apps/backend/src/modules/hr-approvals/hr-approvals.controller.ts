@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { asyncHandler } from "../../lib/http";
-import { parsePayload } from "../../lib/validation";
+import { getRouteParam, parsePayload } from "../../lib/validation";
 import { authService } from "../auth/auth.service";
 import { hrApprovalsService } from "./hr-approvals.service";
 
@@ -21,7 +21,11 @@ export const hrApprovalsController = {
   reviewJob: asyncHandler(async (request, response) => {
     const user = authService.requireUser(request.user);
     const payload = parsePayload(decisionSchema, request.body);
-    const job = await hrApprovalsService.reviewJob(request.params.jobId, payload, user.id);
+    const job = await hrApprovalsService.reviewJob(
+      getRouteParam(request.params.jobId, "jobId"),
+      payload,
+      user.id
+    );
 
     response.json(job);
   })
