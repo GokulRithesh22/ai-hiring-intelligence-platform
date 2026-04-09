@@ -279,7 +279,9 @@ export function VoiceInterviewPanel({
   };
 
   const replayPrompt = () => {
-    if (!conversation?.currentPrompt) {
+    const prompt = conversation?.currentPrompt;
+
+    if (!prompt) {
       return;
     }
 
@@ -287,7 +289,7 @@ export function VoiceInterviewPanel({
     startTransition(async () => {
       setIsSpeaking(true);
       setStatus("Playing the current question...");
-      const played = await playPrompt(conversation.currentPrompt, config);
+      const played = await playPrompt(prompt, config);
       setIsSpeaking(false);
       setAudioAvailable(played);
       setPlaybackFailed(!played);
