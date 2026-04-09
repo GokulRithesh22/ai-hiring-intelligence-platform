@@ -467,7 +467,7 @@ export function VoiceInterviewPanel({
                 key={turn.id}
               >
                 <strong style={{ display: "block", marginBottom: 8 }}>
-                  {turn.role === "assistant" ? "AI interviewer" : "Candidate"}
+                  {turn.role === "assistant" ? "Interviewer" : "Candidate"}
                 </strong>
                 <div>{turn.text}</div>
                 {turn.scores ? (

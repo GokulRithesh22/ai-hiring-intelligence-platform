@@ -30,6 +30,7 @@ export function CandidateApplicationPortal({
   });
   const [result, setResult] = useState<ApplicationSubmissionResult | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isFormComplete =
@@ -59,10 +60,19 @@ export function CandidateApplicationPortal({
     }
 
     setValidationMessage(null);
+    setSubmitError(null);
 
     startTransition(async () => {
-      const response = await submitCandidateApplication(form);
-      setResult(response);
+      try {
+        const response = await submitCandidateApplication(form);
+        setResult(response);
+      } catch (error) {
+        setSubmitError(
+          error instanceof Error
+            ? error.message
+            : "We couldn't submit your application right now."
+        );
+      }
     });
   };
 
@@ -215,6 +225,7 @@ export function CandidateApplicationPortal({
         </div>
 
         {validationMessage ? <p className="muted">{validationMessage}</p> : null}
+        {submitError ? <div className="status-pill status-stop">{submitError}</div> : null}
 
         {!result ? null : (
           <div className="stack">

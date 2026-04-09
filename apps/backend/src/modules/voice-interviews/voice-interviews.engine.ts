@@ -226,16 +226,13 @@ export function startConversation(input: {
   response: VoiceConversationResponse;
 } {
   const questions = buildConversationQuestions(input.seedQuestions);
-  const greeting =
-    "Hi, thanks for taking the time today. I'll guide you through a short conversational interview, ask follow-up questions when helpful, and keep things moving naturally.";
   const firstQuestion = questions[0] ?? null;
 
-  const turns: VoiceTranscriptTurn[] = [createTurn("assistant", "greeting", greeting)];
-  if (firstQuestion) {
-    turns.push(
-      createTurn("assistant", "question", firstQuestion.text, firstQuestion.category, firstQuestion.id)
-    );
-  }
+  const turns: VoiceTranscriptTurn[] = firstQuestion
+    ? [
+        createTurn("assistant", "question", firstQuestion.text, firstQuestion.category, firstQuestion.id)
+      ]
+    : [];
 
   const state: VoiceConversationState = {
     conversationId: randomUUID(),

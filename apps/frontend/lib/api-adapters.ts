@@ -320,24 +320,19 @@ async function startMockVoiceConversation(
   input: StartVoiceInterviewConversationInput
 ): Promise<VoiceInterviewConversationState> {
   const questions = buildMockVoiceQuestions(input.questions ?? []);
-  const greeting =
-    "Hi, thanks for joining. I'll guide you through a short conversational interview and ask follow-up questions when useful.";
   const firstQuestion = questions[0] ?? null;
   const conversationId = createClientId();
-  const turns = [
-    createVoiceTurn("assistant", "greeting", greeting),
-    ...(firstQuestion
-      ? [
-          createVoiceTurn(
-            "assistant",
-            "question",
-            firstQuestion.text,
-            firstQuestion.category,
-            firstQuestion.id
-          )
-        ]
-      : [])
-  ];
+  const turns = firstQuestion
+    ? [
+        createVoiceTurn(
+          "assistant",
+          "question",
+          firstQuestion.text,
+          firstQuestion.category,
+          firstQuestion.id
+        )
+      ]
+    : [];
 
   mockVoiceConversations.set(conversationId, {
     conversationId,
@@ -1403,22 +1398,14 @@ export async function submitCandidateApplication(
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      throw new Error(`Application submit failed: ${response.status}`);
     }
 
     return (await response.json()) as ApplicationSubmissionResult;
-  } catch {
-    const fallbackResult: ApplicationSubmissionResult = {
-      applicationId: fallbackApplicationSubmissionResult.applicationId,
-      candidateId: fallbackApplicationSubmissionResult.candidateId,
-      status: fallbackApplicationSubmissionResult.status,
-      statusMessage: fallbackApplicationSubmissionResult.statusMessage,
-      interviewInvitation: fallbackApplicationSubmissionResult.interviewInvitation,
-      interviewQuestions: payload.resumeFile
-        ? fallbackApplicationSubmissionResult.interviewQuestions
-        : []
-    };
-    return fallbackResult;
+  } catch (error) {
+    throw error instanceof Error
+      ? error
+      : new Error("Application submit failed.");
   }
 }
 
@@ -1471,38 +1458,42 @@ export async function getVoiceInterviewConfig(): Promise<VoiceInterviewConfig> {
 export async function startVoiceInterviewConversation(
   input: StartVoiceInterviewConversationInput
 ): Promise<VoiceInterviewConversationState> {
-  if (typeof window !== "undefined") {
-    try {
-      const response = await fetch("/api/voice/interview/sessions/start", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(input),
-        cache: "no-store"
-      });
-
-      if (response.ok) {
-        return (await response.json()) as VoiceInterviewConversationState;
-      }
-    } catch {
-      // Fall through to existing direct/fallback behavior.
-    }
-  }
-
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(120);
     return startMockVoiceConversation(input);
   }
 
-  return requestOrFallback(
-    "/voice/interview/sessions/start",
-    {
+  if (typeof window !== "undefined") {
+    const response = await fetch("/api/voice/interview/sessions/start", {
       method: "POST",
-      body: JSON.stringify(input)
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(input),
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Voice interview start failed: ${response.status}`);
+    }
+
+    return (await response.json()) as VoiceInterviewConversationState;
+  }
+
+  const response = await fetch(`${apiBaseUrl}/voice/interview/sessions/start`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
     },
-    async () => startMockVoiceConversation(input)
-  );
+    body: JSON.stringify(input),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Voice interview start failed: ${response.status}`);
+  }
+
+  return (await response.json()) as VoiceInterviewConversationState;
 }
 
 export async function synthesizeVoicePrompt(text: string): Promise<Blob | null> {
@@ -1547,51 +1538,55 @@ export async function synthesizeVoicePrompt(text: string): Promise<Blob | null> 
 export async function submitVoiceInterviewTurn(
   input: SubmitVoiceInterviewTurnInput
 ): Promise<VoiceInterviewConversationState> {
-  if (typeof window !== "undefined") {
-    try {
-      const response = await fetch(
-        `/api/voice/interview/sessions/${input.conversationId}/respond`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            transcript: input.transcript,
-            audioBase64: input.audioBase64,
-            mimeType: input.mimeType,
-            fileName: input.fileName
-          }),
-          cache: "no-store"
-        }
-      );
-
-      if (response.ok) {
-        return (await response.json()) as VoiceInterviewConversationState;
-      }
-    } catch {
-      // Fall through to existing direct/fallback behavior.
-    }
-  }
-
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(240);
     return respondMockVoiceConversation(input);
   }
 
-  return requestOrFallback(
-    `/voice/interview/sessions/${input.conversationId}/respond`,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        transcript: input.transcript,
-        audioBase64: input.audioBase64,
-        mimeType: input.mimeType,
-        fileName: input.fileName
-      })
+  if (typeof window !== "undefined") {
+    const response = await fetch(
+      `/api/voice/interview/sessions/${input.conversationId}/respond`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          transcript: input.transcript,
+          audioBase64: input.audioBase64,
+          mimeType: input.mimeType,
+          fileName: input.fileName
+        }),
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Voice interview response failed: ${response.status}`);
+    }
+
+    return (await response.json()) as VoiceInterviewConversationState;
+  }
+
+  const response = await fetch(`${apiBaseUrl}/voice/interview/sessions/${input.conversationId}/respond`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
     },
-    async () => respondMockVoiceConversation(input)
-  );
+    body: JSON.stringify({
+      transcript: input.transcript,
+      audioBase64: input.audioBase64,
+      mimeType: input.mimeType,
+      fileName: input.fileName
+    }),
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(`Voice interview response failed: ${response.status}`);
+  }
+
+  return (await response.json()) as VoiceInterviewConversationState;
 }
 
 export async function transcribeVoiceAnswer(input: {
