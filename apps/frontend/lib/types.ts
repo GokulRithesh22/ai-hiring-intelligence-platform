@@ -95,6 +95,132 @@ export type HrDashboardData = {
   candidates: DashboardCandidate[];
 };
 
+export type HrDashboardMetric = {
+  label: string;
+  value: string;
+};
+
+export type HrFunnelStage = {
+  label: string;
+  value: number;
+};
+
+export type HrDashboardView = {
+  metrics: HrDashboardMetric[];
+  funnel: HrFunnelStage[];
+};
+
+export type HrJobListItem = {
+  id: string;
+  title: string;
+  postedBy: string;
+  location: string | null;
+  applicationsCount: number;
+  status: string;
+  createdAt: string;
+};
+
+export type HrJobApplicationItem = {
+  applicationId: string;
+  candidateId: string;
+  candidateName: string;
+  candidateEmail: string;
+  resumeScore: number | null;
+  interviewScore: number | null;
+  joiningTimeline: string | null;
+  salaryExpectation: number | null;
+  relocation: boolean | null;
+  status: string;
+  appliedAt: string;
+};
+
+export type HrJobDetail = {
+  id: string;
+  title: string;
+  location: string | null;
+  status: string;
+  createdAt: string;
+  hiringManager: {
+    id: string;
+    fullName: string;
+    email: string;
+  } | null;
+  description: string;
+  candidatePipeline: HrFunnelStage[];
+  candidates: HrJobApplicationItem[];
+};
+
+export type HrCandidateListItem = {
+  id: string;
+  name: string;
+  email: string;
+  currentCompany: string | null;
+  latestJobTitle: string | null;
+  latestApplicationStatus: string | null;
+  resumeScore: number | null;
+  interviewScore: number | null;
+  appliedAt: string | null;
+};
+
+export type HrCandidateDetail = {
+  candidate: {
+    id: string;
+    fullName: string;
+    email: string;
+    phone: string | null;
+    linkedinUrl: string | null;
+    currentLocation: string | null;
+    currentCompany: string | null;
+    totalExperienceYears: number | null;
+    source: string;
+  };
+  insight: {
+    resumeAnalysis: Record<string, unknown>;
+    linkedinInsights: Record<string, unknown>;
+    interviewTranscript: string | null;
+    evaluationScores: Record<string, unknown>;
+    claimVerificationFlags: Array<Record<string, unknown>>;
+    suggestedManagerQuestions: string[];
+    hiringRecommendation: string | null;
+  } | null;
+  applications: Array<{
+    applicationId: string;
+    jobId: string;
+    jobTitle: string;
+    status: string;
+    appliedAt: string;
+    resumeScore: number | null;
+    interviewScore: number | null;
+  }>;
+  interviews: Array<{
+    id: string;
+    status: string;
+    communicationScore: number | null;
+    knowledgeScore: number | null;
+    confidenceScore: number | null;
+    overallScore: number | null;
+    summary: string | null;
+    transcript: string | null;
+    items?: Array<{
+      id: string;
+      question: string;
+      answer: string;
+      evaluationScore: number;
+    }>;
+  }>;
+};
+
+export type HrAnalyticsData = {
+  applicationsPerJob: Array<{
+    jobId: string;
+    jobTitle: string;
+    applicationsCount: number;
+  }>;
+  interviewCompletionRate: number;
+  averageResumeScore: number | null;
+  averageInterviewScore: number | null;
+};
+
 export type ApplicationPipelineStep = {
   title: string;
   description: string;

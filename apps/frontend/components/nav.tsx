@@ -14,11 +14,14 @@ export function TopNav() {
         <Link className="button button-ghost" href="/hr/dashboard">
           HR Dashboard
         </Link>
+        <Link className="button button-ghost" href="/hr/jobs">
+          HR Jobs
+        </Link>
         <Link className="button button-ghost" href="/jobs/growth-marketing-manager/apply">
           Candidate Portal
         </Link>
-        <Link className="button button-primary" href="/candidates/cand-001">
-          Candidate Profile
+        <Link className="button button-primary" href="/hr/candidates">
+          HR Candidates
         </Link>
       </div>
     </div>

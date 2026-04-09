@@ -171,6 +171,99 @@ export interface DashboardStats {
   activeJobRoles: number;
 }
 
+export interface HrFunnelStage {
+  label: string;
+  value: number;
+}
+
+export interface HrDashboardData {
+  openPositions: number;
+  applicationsReceived: number;
+  aiInterviewsCompleted: number;
+  candidatesShortlisted: number;
+  funnel: HrFunnelStage[];
+}
+
+export interface HrJobListItem {
+  id: UUID;
+  title: string;
+  postedBy: string;
+  location: string | null;
+  applicationsCount: number;
+  status: JobStatus;
+  createdAt: string;
+}
+
+export interface HrJobApplicationItem {
+  applicationId: UUID;
+  candidateId: UUID;
+  candidateName: string;
+  candidateEmail: string;
+  resumeScore: number | null;
+  interviewScore: number | null;
+  joiningTimeline: string | null;
+  salaryExpectation: number | null;
+  relocation: boolean | null;
+  status: ApplicationStatus;
+  appliedAt: string;
+}
+
+export interface HrJobDetail {
+  id: UUID;
+  title: string;
+  location: string | null;
+  status: JobStatus;
+  createdAt: string;
+  hiringManager: {
+    id: UUID;
+    fullName: string;
+    email: string;
+  } | null;
+  description: string;
+  candidatePipeline: HrFunnelStage[];
+  candidates: HrJobApplicationItem[];
+}
+
+export interface HrCandidateListItem {
+  id: UUID;
+  name: string;
+  email: string;
+  currentCompany: string | null;
+  latestJobTitle: string | null;
+  latestApplicationStatus: ApplicationStatus | null;
+  resumeScore: number | null;
+  interviewScore: number | null;
+  appliedAt: string | null;
+}
+
+export interface HrCandidateApplicationHistoryItem {
+  applicationId: UUID;
+  jobId: UUID;
+  jobTitle: string;
+  status: ApplicationStatus;
+  appliedAt: string;
+  resumeScore: number | null;
+  interviewScore: number | null;
+}
+
+export interface HrCandidateDetail {
+  candidate: Candidate;
+  insight: CandidateInsight | null;
+  applications: HrCandidateApplicationHistoryItem[];
+  interviews: InterviewSession[];
+}
+
+export interface HrAnalyticsData {
+  applicationsPerJob: Array<{
+    jobId: UUID;
+    jobTitle: string;
+    applicationsCount: number;
+  }>;
+  interviewCompletionRate: number;
+  averageResumeScore: number | null;
+  averageInterviewScore: number | null;
+}
+
 export interface CandidateTableRow {
   applicationId: UUID;
   candidateId: UUID;

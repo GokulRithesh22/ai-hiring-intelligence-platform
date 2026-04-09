@@ -1,17 +1,19 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { HrDashboard } from "@/components/hr/hr-dashboard";
-import { getHrDashboard } from "@/lib/api-adapters";
+import { getProtectedHrDashboard } from "@/lib/hr-api";
+import { requireHrSession } from "@/lib/hr-auth";
 
 export default async function HrDashboardPage() {
-  const data = await getHrDashboard({});
+  await requireHrSession();
+  const data = await getProtectedHrDashboard();
 
   return (
     <DashboardShell
       eyebrow="HR Command Center"
       title="Hiring operations dashboard"
-      description="Track applicant throughput, monitor AI interview completion, and filter candidate pipelines across every active role."
+      description="Track open positions, application flow, interview completion, and shortlisted talent from one protected HR workspace."
     >
-      <HrDashboard initialData={data} />
+      <HrDashboard data={data} />
     </DashboardShell>
   );
 }

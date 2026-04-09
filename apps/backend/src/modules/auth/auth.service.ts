@@ -22,6 +22,18 @@ export class AuthService {
     return authRepository.findById(userId);
   }
 
+  async getUserByEmail(email: string): Promise<User | null> {
+    return authRepository.findByEmail(email);
+  }
+
+  async syncSupabaseUser(input: {
+    email: string;
+    fullName: string;
+    role: User["role"];
+  }): Promise<User> {
+    return authRepository.upsertSupabaseUser(input);
+  }
+
   requireUser(user: User | null): User {
     if (!user) {
       throw new ApiError(401, "Authentication required");

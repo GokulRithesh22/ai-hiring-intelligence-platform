@@ -8,12 +8,12 @@ export const hrApprovalsRouter = Router();
 hrApprovalsRouter.get(
   "/pending",
   requireAuth,
-  requireRole("HR", "ADMIN", "RECRUITER"),
+  requireRole(["HR", "ADMIN"]),
   hrApprovalsController.listPendingJobs
 );
 hrApprovalsRouter.post(
   "/:jobId/decision",
   requireAuth,
-  requireRole("HR", "ADMIN"),
+  requireRole(["HR", "ADMIN"]),
   hrApprovalsController.reviewJob
 );

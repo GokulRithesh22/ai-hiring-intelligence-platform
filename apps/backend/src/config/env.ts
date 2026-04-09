@@ -8,6 +8,8 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(4000),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
   DATABASE_URL: z.string().min(1),
+  SUPABASE_URL: z.string().url().optional(),
+  SUPABASE_ANON_KEY: z.string().optional(),
   EMAIL_FROM: z.string().min(1).default("noreply@aihiring.local"),
   OPENAI_API_KEY: z.string().optional(),
   LINKEDIN_CLIENT_ID: z.string().optional(),

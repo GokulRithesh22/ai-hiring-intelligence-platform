@@ -51,6 +51,28 @@ export class AuthRepository {
 
     return mapUser(result.rows[0]);
   }
+
+  async upsertSupabaseUser(input: {
+    email: string;
+    fullName: string;
+    role: User["role"];
+  }): Promise<User> {
+    const result = await query<UserRow>(
+      `
+        INSERT INTO users (email, full_name, role)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (email)
+        DO UPDATE SET
+          full_name = EXCLUDED.full_name,
+          role = EXCLUDED.role,
+          updated_at = NOW()
+        RETURNING *
+      `,
+      [input.email, input.fullName, input.role]
+    );
+
+    return mapUser(result.rows[0]);
+  }
 }
 
 export const authRepository = new AuthRepository();

@@ -7,6 +7,7 @@ import { candidatesRouter } from "../modules/candidates/candidates.routes";
 import { dashboardRouter } from "../modules/dashboard/dashboard.routes";
 import { emailEventsRouter } from "../modules/email-events/email-events.routes";
 import { healthRouter } from "../modules/health/health.routes";
+import { hrRouter } from "../modules/hr/hr.routes";
 import { hrApprovalsRouter } from "../modules/hr-approvals/hr-approvals.routes";
 import { interviewSessionsRouter } from "../modules/interview-sessions/interview-sessions.routes";
 import { jobsRouter } from "../modules/jobs/jobs.routes";
@@ -17,6 +18,7 @@ export const apiRouter = Router();
 
 apiRouter.use("/health", healthRouter);
 apiRouter.use("/auth", authRouter);
+apiRouter.use("/hr", hrRouter);
 apiRouter.use("/jobs", jobsRouter);
 apiRouter.use("/hr/approvals", hrApprovalsRouter);
 apiRouter.use("/candidates", candidatesRouter);

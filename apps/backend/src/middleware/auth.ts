@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 
 import type { User, UserRole } from "@ai-hiring/shared-types";
 
+import { env } from "../config/env";
 import { ApiError } from "../lib/http";
 import { authService } from "../modules/auth/auth.service";
 
@@ -36,13 +37,105 @@ function extractDemoToken(request: Request): { userId: string; role?: UserRole }
   return { userId, role: role as UserRole | undefined };
 }
 
-export async function attachDemoUser(request: Request, _response: Response, next: NextFunction) {
+type RoleInput = UserRole | Lowercase<UserRole>;
+
+function normalizeRole(role: RoleInput): UserRole {
+  return role.toUpperCase() as UserRole;
+}
+
+function parseSupabaseRole(role: unknown): UserRole {
+  if (typeof role !== "string") {
+    return "MANAGER";
+  }
+
+  const normalized = role.toUpperCase();
+  return normalized === "HR" || normalized === "ADMIN" || normalized === "RECRUITER"
+    ? (normalized as UserRole)
+    : "MANAGER";
+}
+
+function extractBearerToken(request: Request): string | null {
+  const authHeader = request.header("authorization");
+
+  if (!authHeader?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  return authHeader.replace("Bearer ", "");
+}
+
+async function verifySupabaseUser(accessToken: string): Promise<User | null> {
+  if (!env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) {
+    return null;
+  }
+
+  const response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
+    headers: {
+      apikey: env.SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${accessToken}`
+    }
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const payload = (await response.json()) as {
+    email?: string;
+    user_metadata?: Record<string, unknown> | null;
+    app_metadata?: Record<string, unknown> | null;
+  };
+
+  if (!payload.email) {
+    return null;
+  }
+
+  const existingUser = await authService.getUserByEmail(payload.email);
+  if (existingUser) {
+    return existingUser;
+  }
+
+  const metadataRole =
+    payload.app_metadata?.role ??
+    payload.user_metadata?.role ??
+    payload.app_metadata?.user_role ??
+    payload.user_metadata?.user_role;
+  const normalizedMetadataRole = parseSupabaseRole(metadataRole);
+
+  return authService.syncSupabaseUser({
+    email: payload.email,
+    fullName:
+      (payload.user_metadata?.full_name as string | undefined) ??
+      (payload.user_metadata?.name as string | undefined) ??
+      payload.email,
+    role: normalizedMetadataRole
+  });
+}
+
+export async function attachAuthenticatedUser(
+  request: Request,
+  _response: Response,
+  next: NextFunction
+) {
   const token = extractDemoToken(request);
 
   if (!token) {
-    request.user = null;
-    next();
-    return;
+    const accessToken = extractBearerToken(request);
+
+    if (!accessToken) {
+      request.user = null;
+      next();
+      return;
+    }
+
+    try {
+      request.user = await verifySupabaseUser(accessToken);
+      next();
+      return;
+    } catch (error) {
+      next(error);
+      return;
+    }
   }
 
   try {
@@ -63,7 +156,11 @@ export function requireAuth(request: Request, _response: Response, next: NextFun
   next();
 }
 
-export function requireRole(...roles: UserRole[]) {
+export function requireRole(rolesOrRole: RoleInput[] | RoleInput, ...remainingRoles: RoleInput[]) {
+  const roles = (Array.isArray(rolesOrRole) ? rolesOrRole : [rolesOrRole, ...remainingRoles]).map(
+    normalizeRole
+  );
+
   return (request: Request, _response: Response, next: NextFunction): void => {
     if (!request.user) {
       next(new ApiError(401, "Authentication required"));
@@ -78,3 +175,5 @@ export function requireRole(...roles: UserRole[]) {
     next();
   };
 }
+
+export const requireHrRole = requireRole(["HR", "ADMIN"]);

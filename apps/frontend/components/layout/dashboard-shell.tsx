@@ -17,7 +17,22 @@ const navigation = [
   {
     href: "/hr/dashboard",
     label: "HR Dashboard",
-    description: "Operations, filters, and approvals"
+    description: "Protected HR control center"
+  },
+  {
+    href: "/hr/jobs",
+    label: "HR Jobs",
+    description: "Role table and job detail views"
+  },
+  {
+    href: "/hr/candidates",
+    label: "HR Candidates",
+    description: "Candidate intelligence and application history"
+  },
+  {
+    href: "/hr/analytics",
+    label: "HR Analytics",
+    description: "Applications, completion rate, and averages"
   },
   {
     href: "/jobs/growth-marketing-manager/apply",
@@ -85,7 +100,7 @@ export function DashboardShell({
               New job request
             </Link>
             <Link className="button button-primary" href="/hr/dashboard">
-              Review pipeline
+              Open HR workspace
             </Link>
           </div>
         </header>
