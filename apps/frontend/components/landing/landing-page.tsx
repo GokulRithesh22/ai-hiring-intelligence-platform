@@ -16,8 +16,8 @@ export function LandingPage({ jobs }: LandingPageProps) {
           </Link>
 
           <div className="landing-links">
-            <Link className="button button-primary" href="#open-roles">
-              View open roles
+            <Link className="button button-primary" href="/manager/login">
+              Login
             </Link>
           </div>
         </nav>

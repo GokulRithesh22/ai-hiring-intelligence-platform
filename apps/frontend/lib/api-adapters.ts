@@ -691,16 +691,20 @@ export async function getPublicJobs(): Promise<PublicJobCard[]> {
         approvedDescription: null
       }))
     };
-  }).then((payload) =>
-    payload.items.map((job) => ({
+  }).then((payload) => {
+    if (!payload.items.length) {
+      return publicJobCards;
+    }
+
+    return payload.items.map((job) => ({
       id: job.id,
       slug: slugifyJob(job.title),
       title: job.title,
       location: job.location ?? "Remote / flexible",
       experienceLevel: job.minExperienceYears ? `${job.minExperienceYears}+ years` : "Open experience",
       summary: job.approvedDescription ?? job.generatedDescription ?? "Explore the full role description."
-    }))
-  );
+    }));
+  });
 }
 
 export async function getJobIntakeQuestions(): Promise<JobIntakeQuestion[]> {
