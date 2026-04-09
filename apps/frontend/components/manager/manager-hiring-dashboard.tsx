@@ -121,6 +121,8 @@ function JobCard({ job }: { job: ManagerJobCardData }) {
 }
 
 export function ManagerHiringDashboard({ data }: ManagerHiringDashboardProps) {
+  const metrics = data.metrics ?? [];
+
   return (
     <div className="stack-lg">
       <section className="cta-strip">
@@ -138,7 +140,7 @@ export function ManagerHiringDashboard({ data }: ManagerHiringDashboardProps) {
       </section>
 
       <section className="stats-grid">
-        {data.metrics.map((metric) => (
+        {metrics.map((metric) => (
           <article className="card" key={metric.label}>
             <span className="subtle-label">{metric.label}</span>
             <span className="stat-value">{metric.value}</span>
