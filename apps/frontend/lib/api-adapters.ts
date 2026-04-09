@@ -1394,13 +1394,26 @@ export async function submitCandidateApplication(
       formData.append("resume", payload.resumeFile);
     }
 
-    const response = await fetch(`${apiBaseUrl}/public/jobs/${payload.jobId}/apply`, {
-      method: "POST",
-      body: formData
-    });
+    const response =
+      typeof window !== "undefined"
+        ? await fetch(`/api/public/jobs/${payload.jobId}/apply`, {
+            method: "POST",
+            body: formData
+          })
+        : await fetch(`${apiBaseUrl}/public/jobs/${payload.jobId}/apply`, {
+            method: "POST",
+            body: formData
+          });
 
     if (!response.ok) {
-      throw new Error(`Application submit failed: ${response.status}`);
+      let message = `Application submit failed: ${response.status}`;
+      try {
+        const payload = (await response.json()) as { error?: string; message?: string };
+        message = payload.error ?? payload.message ?? message;
+      } catch {
+        // keep default message
+      }
+      throw new Error(message);
     }
 
     return (await response.json()) as ApplicationSubmissionResult;

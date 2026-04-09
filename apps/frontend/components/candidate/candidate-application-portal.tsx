@@ -14,6 +14,15 @@ type CandidateApplicationPortalProps = {
   portal: ApplicationPortalData;
 };
 
+function isValidLinkedInUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.hostname.includes("linkedin.com");
+  } catch {
+    return false;
+  }
+}
+
 export function CandidateApplicationPortal({
   portal
 }: CandidateApplicationPortalProps) {
@@ -39,11 +48,17 @@ export function CandidateApplicationPortal({
     email: form.email.trim().length > 3 ? null : "Email is required.",
     phone: (form.phone?.trim().length ?? 0) > 3 ? null : "Phone is required.",
     linkedInUrl:
-      (form.linkedInUrl?.trim().length ?? 0) > 3 ? null : "LinkedIn URL is required.",
+      (form.linkedInUrl?.trim().length ?? 0) === 0
+        ? "LinkedIn URL is required."
+        : isValidLinkedInUrl(form.linkedInUrl ?? "")
+          ? null
+          : "Enter a valid LinkedIn profile URL.",
     earliestJoiningDate:
       form.earliestJoiningDate.trim().length > 0 ? null : "Earliest joining date is required.",
     expectedCtc:
-      form.expectedCtc.trim().length > 0 ? null : "Expected CTC is required.",
+      form.expectedCtc.trim().length > 0
+        ? null
+        : "Expected CTC is required.",
     relocation:
       form.relocation.trim().length > 0 ? null : "Relocation willingness is required.",
     resumeFile: form.resumeFile ? null : "Resume upload is required."
