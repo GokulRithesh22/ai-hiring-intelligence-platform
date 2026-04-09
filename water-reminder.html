@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hydration Loop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Syne:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="water-reminder.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero-panel">
+        <p class="eyebrow">Daily wellness</p>
+        <h1>Drink water before the day runs away from you.</h1>
+        <p class="hero-copy">
+          Set a reminder rhythm, log each glass, and keep your hydration target visible through the day.
+        </p>
+      </section>
+
+      <section class="tracker-panel" aria-labelledby="trackerTitle">
+        <div class="panel-head">
+          <div>
+            <p class="section-kicker">Hydration tracker</p>
+            <h2 id="trackerTitle">Hydration Loop</h2>
+          </div>
+          <span class="status-pill" id="reminderStatus">Reminders off</span>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card">
+            <span class="stat-label">Today</span>
+            <strong id="consumedGlasses">0 / 8 glasses</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Progress</span>
+            <strong id="progressPercent">0%</strong>
+          </article>
+          <article class="stat-card">
+            <span class="stat-label">Next reminder</span>
+            <strong id="nextReminder">Not scheduled</strong>
+          </article>
+        </div>
+
+        <div class="progress-block" aria-label="Hydration progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </div>
+
+        <form class="settings-form" id="settingsForm">
+          <label>
+            <span>Daily goal</span>
+            <select id="goalInput" name="goal">
+              <option value="6">6 glasses</option>
+              <option value="8" selected>8 glasses</option>
+              <option value="10">10 glasses</option>
+              <option value="12">12 glasses</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Reminder every</span>
+            <select id="intervalInput" name="interval">
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60" selected>60 min</option>
+              <option value="90">90 min</option>
+              <option value="120">120 min</option>
+            </select>
+          </label>
+
+          <div class="settings-actions">
+            <button class="primary-button" id="toggleReminders" type="button">Start reminders</button>
+            <button class="secondary-button" id="testReminder" type="button">Test reminder</button>
+          </div>
+        </form>
+
+        <div class="actions-row">
+          <button class="glass-button" id="addGlass" type="button">+ Add one glass</button>
+          <button class="secondary-button" id="removeGlass" type="button">Undo last</button>
+          <button class="secondary-button" id="resetDay" type="button">Reset today</button>
+        </div>
+
+        <section class="tips-panel" aria-labelledby="tipsTitle">
+          <h3 id="tipsTitle">How to use</h3>
+          <ul class="tips-list">
+            <li>Pick your daily water goal and reminder interval.</li>
+            <li>Allow browser notifications when prompted.</li>
+            <li>Press `+ Add one glass` each time you finish a glass.</li>
+            <li>The app stores today’s progress in this browser.</li>
+          </ul>
+        </section>
+      </section>
+    </main>
+
+    <div class="toast is-hidden" id="toast" role="status" aria-live="polite"></div>
+
+    <script src="water-reminder.js"></script>
+  </body>
+</html>
