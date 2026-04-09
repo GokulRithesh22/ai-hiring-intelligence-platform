@@ -320,7 +320,7 @@ export function createMockInterviewQuestionSet(input: InterviewQuestionGeneratio
 }
 
 export function createMockInterviewEvaluationResult(input: InterviewEvaluationInput): InterviewEvaluationResult {
-  const answerEvaluations = input.answers.map((answer) => {
+  const answerEvaluations: InterviewEvaluationResult["answerEvaluations"] = input.answers.map((answer) => {
     const wordCount = answer.answer.trim().split(/\s+/).filter(Boolean).length;
     const score = clampScore(40 + Math.min(50, wordCount * 1.5));
     return {
