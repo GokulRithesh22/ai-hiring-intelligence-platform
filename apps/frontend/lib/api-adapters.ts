@@ -1303,12 +1303,20 @@ export async function getApplicationPortal(jobId: string): Promise<ApplicationPo
     `/public/jobs/${jobId}`,
     undefined,
     async () => {
+      const matchedJob = publicJobCards.find(
+        (job) => job.id === jobId || job.slug === jobId
+      );
+
       await sleep(140);
       return {
         ...applicationPortalData,
         job: {
           ...applicationPortalData.job,
-          id: jobId
+          id: matchedJob?.id ?? jobId,
+          title: matchedJob?.title ?? applicationPortalData.job.title,
+          summary: matchedJob?.summary ?? applicationPortalData.job.summary,
+          experienceLevel: matchedJob?.experienceLevel ?? applicationPortalData.job.experienceLevel,
+          location: matchedJob?.location ?? applicationPortalData.job.location
         }
       };
     }

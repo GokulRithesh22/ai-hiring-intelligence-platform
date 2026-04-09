@@ -111,31 +111,49 @@ export const landingContent: LandingContent = {
 
 export const publicJobCards: PublicJobCard[] = [
   {
-    id: "growth-marketing-manager",
-    slug: "growth-marketing-manager",
-    title: "Growth Marketing Manager",
-    location: "Bengaluru hybrid",
-    experienceLevel: "6-8 years",
+    id: "associate-center-manager",
+    slug: "associate-center-manager",
+    title: "Associate Center Manager",
+    location: "Whitefield, Bengaluru",
+    experienceLevel: "2-4 years",
     summary:
-      "Own experimentation across paid acquisition, lifecycle automation, and attribution systems to improve efficient revenue growth for a SaaS business."
+      "Own day-to-day center operations, member experience, staff coordination, and on-ground performance for a high-energy fitness location."
   },
   {
-    id: "product-marketing-lead",
-    slug: "product-marketing-lead",
-    title: "Product Marketing Lead",
-    location: "Remote India",
-    experienceLevel: "5-7 years",
+    id: "sales-executive-cult-fit",
+    slug: "sales-executive-cult-fit",
+    title: "Sales Executive - Cult Fit",
+    location: "Bengaluru",
+    experienceLevel: "1-3 years",
     summary:
-      "Shape positioning, launch strategy, and customer proof points for a fast-moving B2B product line with close GTM collaboration."
+      "Drive membership growth through consultative selling, lead follow-up, and conversion-focused conversations across the fitness funnel."
   },
   {
-    id: "customer-success-strategist",
-    slug: "customer-success-strategist",
-    title: "Customer Success Strategist",
-    location: "Bengaluru hybrid",
-    experienceLevel: "4-6 years",
+    id: "personal-trainer-gym-fitness",
+    slug: "personal-trainer-gym-fitness",
+    title: "Personal Trainer - Gym / Fitness",
+    location: "Bengaluru",
+    experienceLevel: "2-5 years",
     summary:
-      "Drive retention, expansion, and executive relationships while turning product usage data into proactive account plans."
+      "Coach members through safe, motivating, goal-based fitness programs while building consistent training relationships and measurable progress."
+  },
+  {
+    id: "swimming-coach",
+    slug: "swimming-coach",
+    title: "Swimming Coach",
+    location: "Bengaluru",
+    experienceLevel: "2-5 years",
+    summary:
+      "Lead structured swim sessions, improve member technique and confidence, and maintain a safe, high-quality coaching environment."
+  },
+  {
+    id: "cult-fit-recruiter",
+    slug: "cult-fit-recruiter",
+    title: "Cult Fit Recruiter",
+    location: "Bengaluru",
+    experienceLevel: "3+ years",
+    summary:
+      "Partner with hiring teams to source, screen, and close talent across operations and corporate functions while maintaining a strong candidate experience."
   }
 ];
 
