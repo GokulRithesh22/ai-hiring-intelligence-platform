@@ -319,6 +319,20 @@ export const candidateProfile: CandidateProfileData = {
     "What tradeoffs would you make between paid growth and lifecycle investment in the first quarter?",
     "Which team rituals have helped you scale experimentation quality across functions?"
   ],
+  scoreEngine: {
+    finalScore: "84 / 100",
+    confidence: "82% (High confidence)",
+    roleCapability: "86",
+    thinkingBehavior: "82",
+    impact: "80",
+    transferability: "79",
+    potential: "85",
+    evidence: [
+      "Reduced CAC by 28% through channel mix and lifecycle optimization.",
+      "Interview answers showed structured experimentation and executive-friendly communication.",
+      "Career progression indicates increasing ownership across growth and analytics."
+    ]
+  },
   scoreBreakdown: {
     communication: "84",
     knowledge: "86",
