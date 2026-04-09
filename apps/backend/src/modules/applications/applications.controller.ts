@@ -7,6 +7,9 @@ import { applicationsService } from "./applications.service";
 const createApplicationSchema = z.object({
   candidateId: z.string().uuid(),
   jobId: z.string().uuid(),
+  resumeUrl: z.string().optional().nullable(),
+  expectedCtc: z.number().optional().nullable(),
+  joiningDate: z.string().optional().nullable(),
   resumeMatchScore: z.number().optional().nullable(),
   qualificationPassed: z.boolean().optional().nullable(),
   qualificationAnswers: z

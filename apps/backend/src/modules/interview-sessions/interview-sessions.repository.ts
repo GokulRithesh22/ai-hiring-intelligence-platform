@@ -1,5 +1,10 @@
 import { query } from "@ai-hiring/database";
-import type { CompleteInterviewSessionInput, InterviewQuestionAnswer, InterviewSession } from "@ai-hiring/shared-types";
+import type {
+  CompleteInterviewSessionInput,
+  InterviewQuestionAnswer,
+  InterviewSession,
+  VoiceInterviewTranscriptDocument
+} from "@ai-hiring/shared-types";
 
 import { toNumber } from "../../lib/validation";
 
@@ -28,18 +33,86 @@ interface ItemRow {
   created_at: Date;
 }
 
-function mapItem(row: ItemRow): InterviewQuestionAnswer {
+function parseStructuredTranscript(
+  transcript: string | null
+): VoiceInterviewTranscriptDocument | null {
+  if (!transcript) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(transcript) as Partial<VoiceInterviewTranscriptDocument>;
+
+    if (
+      parsed &&
+      parsed.format === "voice_interview_v1" &&
+      Array.isArray(parsed.items) &&
+      Array.isArray(parsed.turns) &&
+      typeof parsed.transcriptText === "string"
+    ) {
+      return parsed as VoiceInterviewTranscriptDocument;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function serializeTranscript(input: CompleteInterviewSessionInput): string {
+  const hasVoiceMetadata =
+    Boolean(input.voiceTranscript?.length) ||
+    input.items.some(
+      (item) =>
+        item.category ||
+        item.askedAsFollowUp ||
+        item.rationale ||
+        item.scoreBreakdown
+    );
+
+  if (!hasVoiceMetadata) {
+    return input.transcript;
+  }
+
+  const document: VoiceInterviewTranscriptDocument = {
+    format: "voice_interview_v1",
+    transcriptText: input.transcript,
+    turns: input.voiceTranscript ?? [],
+    items: input.items.map((item) => ({
+      question: item.question,
+      answer: item.answer,
+      evaluationScore: item.evaluationScore,
+      category: item.category ?? null,
+      askedAsFollowUp: item.askedAsFollowUp ?? false,
+      rationale: item.rationale ?? null,
+      scoreBreakdown: item.scoreBreakdown ?? null
+    }))
+  };
+
+  return JSON.stringify(document);
+}
+
+function mapItem(
+  row: ItemRow,
+  metadata?: VoiceInterviewTranscriptDocument["items"][number]
+): InterviewQuestionAnswer {
   return {
     id: row.id,
     sessionId: row.session_id,
     question: row.question,
     answer: row.answer,
     evaluationScore: Number(row.evaluation_score),
+    category: metadata?.category ?? null,
+    askedAsFollowUp: metadata?.askedAsFollowUp ?? false,
+    rationale: metadata?.rationale ?? null,
+    scoreBreakdown: metadata?.scoreBreakdown ?? null,
     createdAt: row.created_at.toISOString()
   };
 }
 
 function mapSession(row: SessionRow, items?: InterviewQuestionAnswer[]): InterviewSession {
+  const structuredTranscript = parseStructuredTranscript(row.transcript);
+
   return {
     id: row.id,
     applicationId: row.application_id,
@@ -51,7 +124,8 @@ function mapSession(row: SessionRow, items?: InterviewQuestionAnswer[]): Intervi
     confidenceScore: toNumber(row.confidence_score),
     overallScore: toNumber(row.overall_score),
     summary: row.summary,
-    transcript: row.transcript,
+    transcript: structuredTranscript?.transcriptText ?? row.transcript,
+    structuredTranscript,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
     items
@@ -103,10 +177,30 @@ export class InterviewSessionsRepository {
       [sessionId]
     );
 
-    return mapSession(session, itemsResult.rows.map(mapItem));
+    const structuredTranscript = parseStructuredTranscript(session.transcript);
+
+    return mapSession(
+      session,
+      itemsResult.rows.map((row, index) => mapItem(row, structuredTranscript?.items[index]))
+    );
+  }
+
+  async findByApplicationId(applicationId: string): Promise<InterviewSession | null> {
+    const sessionResult = await query<SessionRow>(
+      "SELECT * FROM interview_sessions WHERE application_id = $1 LIMIT 1",
+      [applicationId]
+    );
+
+    const session = sessionResult.rows[0];
+    if (!session) {
+      return null;
+    }
+
+    return this.findById(session.id);
   }
 
   async complete(sessionId: string, input: CompleteInterviewSessionInput) {
+    const transcriptPayload = serializeTranscript(input);
     const result = await query<SessionRow>(
       `
         UPDATE interview_sessions
@@ -129,7 +223,7 @@ export class InterviewSessionsRepository {
         input.confidenceScore,
         Math.round((input.communicationScore + input.knowledgeScore + input.confidenceScore) / 3),
         input.summary,
-        input.transcript
+        transcriptPayload
       ]
     );
 

@@ -24,6 +24,7 @@ interface JobApprovalRow {
   approved_by: string | null;
   approved_at: Date | null;
   published_at: Date | null;
+  structured_analysis: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
 }
@@ -50,6 +51,7 @@ function mapJob(row: JobApprovalRow): Job {
     approvedBy: row.approved_by,
     approvedAt: row.approved_at?.toISOString() ?? null,
     publishedAt: row.published_at?.toISOString() ?? null,
+    structuredAnalysis: row.structured_analysis ?? {},
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString()
   };

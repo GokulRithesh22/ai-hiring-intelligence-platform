@@ -16,9 +16,22 @@ export class InterviewSessionsService {
   }
 
   async completeSession(sessionId: string, input: CompleteInterviewSessionInput) {
-    const session = await this.getSession(sessionId);
-    await applicationsService.finalizeInterviewIntelligence(session.applicationId, input.items);
-    return interviewSessionsRepository.complete(sessionId, input);
+    const completedSession = await interviewSessionsRepository.complete(sessionId, input);
+
+    if (!completedSession) {
+      throw new ApiError(404, "Interview session not found");
+    }
+
+    await applicationsService.finalizeInterviewIntelligence(
+      sessionId,
+      completedSession.applicationId,
+      input.items.map((item) => ({
+        question: item.question,
+        answer: item.answer
+      }))
+    );
+
+    return interviewSessionsRepository.findById(sessionId);
   }
 }
 

@@ -140,6 +140,34 @@ export const resumeScreeningResultSchema = z.object({
   claimVerificationFlags: z.array(claimVerificationFlagSchema).default([])
 });
 
+export const structuredResumeAnalysisSchema = z.object({
+  experienceYears: z.number().min(0).max(60),
+  roles: z.array(z.string()).default([]),
+  skills: z.array(z.string()).default([]),
+  industries: z.array(z.string()).default([]),
+  achievements: z.array(z.string()).default([]),
+  toolsUsed: z.array(z.string()).default([]),
+  education: z.array(z.string()).default([])
+});
+
+export const structuredJobDescriptionAnalysisSchema = z.object({
+  requiredExperience: z.number().min(0).max(60),
+  requiredSkills: z.array(z.string()).default([]),
+  preferredSkills: z.array(z.string()).default([]),
+  domain: z.array(z.string()).default([]),
+  toolsRequired: z.array(z.string()).default([])
+});
+
+export const semanticScreeningBreakdownSchema = z.object({
+  experienceMatch: z.number().min(0).max(100),
+  skillsMatch: z.number().min(0).max(100),
+  domainMatch: z.number().min(0).max(100),
+  achievementsMatch: z.number().min(0).max(100),
+  strengths: z.array(z.string()).default([]),
+  weaknesses: z.array(z.string()).default([]),
+  reasoningSummary: z.string()
+});
+
 export const qualificationAnswersSchema = z.object({
   joiningTimelineDays: z.number().int().nonnegative().nullable().optional(),
   joiningTimelineText: z.string().optional(),
@@ -197,7 +225,8 @@ export const interviewEvaluationInputSchema = z.object({
 export const interviewAnswerEvaluationSchema = z.object({
   questionId: z.string(),
   score: z.number().min(0).max(100),
-  rationale: z.string()
+  rationale: z.string(),
+  evidence: z.array(z.string()).default([])
 });
 
 export const interviewEvaluationResultSchema = z.object({
@@ -210,6 +239,65 @@ export const interviewEvaluationResultSchema = z.object({
   concerns: z.array(z.string()).max(6),
   recommendation: recommendationSchema,
   answerEvaluations: z.array(interviewAnswerEvaluationSchema)
+});
+
+export const scoreEvidenceSourceSchema = z.enum(["RESUME", "INTERVIEW", "SCREENING", "SYSTEM"]);
+
+export const scoreEvidenceItemSchema = z.object({
+  source: scoreEvidenceSourceSchema,
+  signal: z.string(),
+  excerpt: z.string()
+});
+
+export const candidateScoreComponentSchema = z.object({
+  score: z.number().min(0).max(100),
+  rationale: z.string(),
+  evidence: z.array(scoreEvidenceItemSchema).default([])
+});
+
+export const candidateScoringInputSchema = z.object({
+  applicationId: z.string(),
+  candidateId: z.string(),
+  jobId: z.string(),
+  jobTitle: z.string(),
+  structuredResumeAnalysis: structuredResumeAnalysisSchema,
+  structuredJobAnalysis: structuredJobDescriptionAnalysisSchema,
+  screening: z.object({
+    semanticSimilarity: z.number().min(0).max(100),
+    experienceMatch: z.number().min(0).max(100),
+    skillsMatch: z.number().min(0).max(100),
+    domainMatch: z.number().min(0).max(100),
+    achievementsMatch: z.number().min(0).max(100),
+    finalScore: z.number().min(0).max(100),
+    strengths: z.array(z.string()).default([]),
+    weaknesses: z.array(z.string()).default([]),
+    reasoningSummary: z.string().nullable().optional()
+  }),
+  interview: z.object({
+    communicationScore: z.number().min(0).max(100),
+    knowledgeScore: z.number().min(0).max(100),
+    confidenceScore: z.number().min(0).max(100),
+    overallScore: z.number().min(0).max(100),
+    summary: z.string(),
+    answerEvaluations: z.array(interviewAnswerEvaluationSchema).default([]),
+    questionAnswerPairs: z.array(interviewAnswerSchema).default([])
+  }).optional(),
+  qualificationAnswers: qualificationAnswersSchema.optional().nullable(),
+  resumeText: z.string().optional()
+});
+
+export const candidateScoringResultSchema = z.object({
+  roleCapability: candidateScoreComponentSchema,
+  thinkingBehavior: candidateScoreComponentSchema,
+  impact: candidateScoreComponentSchema,
+  transferability: candidateScoreComponentSchema,
+  potential: candidateScoreComponentSchema,
+  finalScore: z.number().min(0).max(100),
+  confidenceScore: z.number().min(0).max(1),
+  confidenceInterpretation: z.string(),
+  summary: z.string(),
+  recommendation: recommendationSchema,
+  evidenceSummary: z.array(z.string()).default([])
 });
 
 export const applicationHistoryEntrySchema = z.object({
@@ -278,6 +366,9 @@ export type GeneratedJobDescription = z.infer<typeof generatedJobDescriptionSche
 export type CandidateProfileInput = z.infer<typeof candidateProfileInputSchema>;
 export type ResumeScreeningInput = z.infer<typeof resumeScreeningInputSchema>;
 export type ResumeScreeningResult = z.infer<typeof resumeScreeningResultSchema>;
+export type StructuredResumeAnalysis = z.infer<typeof structuredResumeAnalysisSchema>;
+export type StructuredJobDescriptionAnalysis = z.infer<typeof structuredJobDescriptionAnalysisSchema>;
+export type SemanticScreeningBreakdown = z.infer<typeof semanticScreeningBreakdownSchema>;
 export type QualificationAnswers = z.infer<typeof qualificationAnswersSchema>;
 export type QualificationEvaluationInput = z.infer<typeof qualificationEvaluationInputSchema>;
 export type QualificationEvaluationResult = z.infer<typeof qualificationEvaluationResultSchema>;
@@ -285,6 +376,10 @@ export type InterviewQuestionGenerationInput = z.infer<typeof interviewQuestionG
 export type InterviewQuestionSet = z.infer<typeof interviewQuestionSetSchema>;
 export type InterviewEvaluationInput = z.infer<typeof interviewEvaluationInputSchema>;
 export type InterviewEvaluationResult = z.infer<typeof interviewEvaluationResultSchema>;
+export type ScoreEvidenceItem = z.infer<typeof scoreEvidenceItemSchema>;
+export type CandidateScoreComponent = z.infer<typeof candidateScoreComponentSchema>;
+export type CandidateScoringInput = z.infer<typeof candidateScoringInputSchema>;
+export type CandidateScoringResult = z.infer<typeof candidateScoringResultSchema>;
 export type CandidateIntelligenceReportInput = z.infer<typeof candidateIntelligenceReportInputSchema>;
 export type CandidateIntelligenceReport = z.infer<typeof candidateIntelligenceReportSchema>;
 export type ManagerQuestionSuggestionInput = z.infer<typeof managerQuestionSuggestionInputSchema>;

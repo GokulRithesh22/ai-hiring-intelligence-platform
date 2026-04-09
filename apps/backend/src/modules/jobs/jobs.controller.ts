@@ -27,7 +27,52 @@ const createJobSchema = z.object({
   generatedDescription: z.string().min(20).optional()
 });
 
+const managerDraftSchema = z.object({
+  mode: z.enum(["CONVERSATIONAL_AI", "STRUCTURED_INPUT"]),
+  title: z.string().min(2),
+  department: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  employmentType: z.enum(["FULL_TIME", "PART_TIME", "CONTRACT", "INTERN"]).optional(),
+  minExperienceYears: z.number().min(0).max(40).optional().nullable(),
+  salaryMin: z.number().min(0).optional().nullable(),
+  salaryMax: z.number().min(0).optional().nullable(),
+  currency: z.string().length(3).optional().nullable(),
+  joiningTimeline: z.string().optional().nullable(),
+  relocationRequired: z.boolean().optional(),
+  intakeAnswers: z.array(
+    z.object({
+      prompt: z.string().min(1),
+      answer: z.string().min(1)
+    })
+  )
+});
+
+const refineDescriptionSchema = z.object({
+  selectedVariantId: z.string().min(1),
+  feedback: z.enum([
+    "TOO_GENERIC",
+    "TOO_COMPLEX",
+    "IMPROVE_RESPONSIBILITIES",
+    "MAKE_MORE_OUTCOME_FOCUSED"
+  ])
+});
+
 export const jobsController = {
+  getManagerDashboard: asyncHandler(async (request, response) => {
+    const user = authService.requireUser(request.user);
+    response.json(await jobsService.getManagerDashboard(user.id));
+  }),
+
+  getManagerJobIntelligence: asyncHandler(async (request, response) => {
+    const user = authService.requireUser(request.user);
+    response.json(
+      await jobsService.getManagerJobIntelligence(
+        getRouteParam(request.params.jobId, "jobId"),
+        user.id
+      )
+    );
+  }),
+
   listJobs: asyncHandler(async (_request, response) => {
     response.json({
       items: await jobsService.listJobs()
@@ -53,6 +98,13 @@ export const jobsController = {
     response.status(201).json(job);
   }),
 
+  createManagerDraft: asyncHandler(async (request, response) => {
+    const user = authService.requireUser(request.user);
+    const payload = parsePayload(managerDraftSchema, request.body);
+
+    response.status(201).json(await jobsService.createManagerDraft(payload, user.id));
+  }),
+
   saveIntake: asyncHandler(async (request, response) => {
     const payload = parsePayload(
       z.object({
@@ -74,6 +126,20 @@ export const jobsController = {
   generateDescription: asyncHandler(async (request, response) => {
     response.json(
       await jobsService.generateDescription(getRouteParam(request.params.jobId, "jobId"))
+    );
+  }),
+
+  refineManagerDescription: asyncHandler(async (request, response) => {
+    const user = authService.requireUser(request.user);
+    const payload = parsePayload(refineDescriptionSchema, request.body);
+
+    response.json(
+      await jobsService.refineManagerDescription(
+        getRouteParam(request.params.jobId, "jobId"),
+        user.id,
+        payload.selectedVariantId,
+        payload.feedback
+      )
     );
   }),
 

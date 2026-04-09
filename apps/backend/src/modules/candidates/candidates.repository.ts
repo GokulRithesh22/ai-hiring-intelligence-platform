@@ -91,6 +91,49 @@ export class CandidatesRepository {
 
     return mapCandidate(result.rows[0]);
   }
+
+  async update(candidateId: string, input: Partial<CreateCandidateInput>): Promise<Candidate | null> {
+    const existing = await this.findById(candidateId);
+    if (!existing) {
+      return null;
+    }
+
+    const result = await query<CandidateRow>(
+      `
+        UPDATE candidates
+        SET
+          full_name = $2,
+          phone = $3,
+          linkedin_url = $4,
+          resume_file_url = $5,
+          resume_text = $6,
+          current_location = $7,
+          total_experience_years = $8,
+          current_company = $9,
+          permanent_profile = $10::jsonb,
+          updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+      `,
+      [
+        candidateId,
+        input.fullName ?? existing.fullName,
+        input.phone ?? existing.phone,
+        input.linkedinUrl ?? existing.linkedinUrl,
+        input.resumeFileUrl ?? existing.resumeFileUrl,
+        input.resumeText ?? existing.resumeText,
+        input.currentLocation ?? existing.currentLocation,
+        input.totalExperienceYears ?? existing.totalExperienceYears,
+        input.currentCompany ?? existing.currentCompany,
+        JSON.stringify({
+          ...existing.permanentProfile,
+          ...(input.permanentProfile ?? {})
+        })
+      ]
+    );
+
+    return result.rows[0] ? mapCandidate(result.rows[0]) : null;
+  }
 }
 
 export const candidatesRepository = new CandidatesRepository();

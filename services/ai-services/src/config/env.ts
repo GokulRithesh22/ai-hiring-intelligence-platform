@@ -11,6 +11,7 @@ export interface AiServiceConfig {
   appBaseUrl?: string;
   appTitle?: string;
   models: Record<ModelProfile, string>;
+  embeddingModel: string;
   reasoningEffort: ReasoningEffort;
   enableMockFallback: boolean;
   resumePassThreshold: number;
@@ -24,6 +25,7 @@ export function loadAiServiceConfig(env: NodeJS.ProcessEnv = process.env): AiSer
       fast: env.AI_MODEL_FAST || "gpt-5.4-mini",
       extraction: env.AI_MODEL_EXTRACTION || "gpt-5.4-nano"
     },
+    embeddingModel: env.AI_MODEL_EMBEDDING || defaultEmbeddingModel(env.AI_PROVIDER),
     reasoningEffort: parseReasoningEffort(env.AI_REASONING_EFFORT),
     enableMockFallback: parseBoolean(env.AI_ENABLE_MOCK_FALLBACK, true),
     resumePassThreshold: parseNumber(env.RESUME_PASS_THRESHOLD, 70),
@@ -34,6 +36,10 @@ export function loadAiServiceConfig(env: NodeJS.ProcessEnv = process.env): AiSer
     ...(env.APP_BASE_URL ? { appBaseUrl: env.APP_BASE_URL } : {}),
     ...(env.APP_TITLE ? { appTitle: env.APP_TITLE } : {})
   };
+}
+
+function defaultEmbeddingModel(provider: string | undefined): string {
+  return provider === "openrouter" ? "openai/text-embedding-3-small" : "text-embedding-3-small";
 }
 
 function parseProvider(value: string | undefined): ProviderMode {

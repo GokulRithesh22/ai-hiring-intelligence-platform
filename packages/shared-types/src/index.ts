@@ -63,6 +63,7 @@ export interface Job {
   approvedBy: UUID | null;
   approvedAt: string | null;
   publishedAt: string | null;
+  structuredAnalysis: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -95,6 +96,9 @@ export interface Application {
   id: UUID;
   jobId: UUID;
   candidateId: UUID;
+  resumeUrl: string | null;
+  expectedCtc: number | null;
+  joiningDate: string | null;
   status: ApplicationStatus;
   resumeMatchScore: number | null;
   qualificationPassed: boolean | null;
@@ -111,7 +115,105 @@ export interface InterviewQuestionAnswer {
   question: string;
   answer: string;
   evaluationScore: number;
+  category?: VoiceInterviewCategory | null;
+  askedAsFollowUp?: boolean;
+  rationale?: string | null;
+  scoreBreakdown?: VoiceResponseScoreBreakdown | null;
   createdAt: string;
+}
+
+export type ScoreEvidenceSource = "RESUME" | "INTERVIEW" | "SCREENING" | "SYSTEM";
+
+export interface ScoreEvidenceItem {
+  source: ScoreEvidenceSource;
+  signal: string;
+  excerpt: string;
+}
+
+export interface CandidateScoreComponentDetail {
+  score: number;
+  rationale: string;
+  evidence: ScoreEvidenceItem[];
+}
+
+export interface CandidateScore {
+  id: UUID;
+  applicationId: UUID;
+  candidateId: UUID;
+  jobId: UUID;
+  roleCapability: number;
+  thinkingBehavior: number;
+  impact: number;
+  transferability: number;
+  potential: number;
+  finalScore: number;
+  confidenceScore: number;
+  confidenceLabel: string;
+  summary: string | null;
+  recommendation: string | null;
+  componentBreakdown: {
+    roleCapability: CandidateScoreComponentDetail;
+    thinkingBehavior: CandidateScoreComponentDetail;
+    impact: CandidateScoreComponentDetail;
+    transferability: CandidateScoreComponentDetail;
+    potential: CandidateScoreComponentDetail;
+  };
+  evidenceSummary: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InterviewEvaluationDetail {
+  id: UUID;
+  sessionId: UUID;
+  interviewItemId: UUID | null;
+  question: string;
+  answer: string;
+  score: number;
+  rationale: string;
+  evidence: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type VoiceInterviewCategory =
+  | "experience_validation"
+  | "skill_depth_validation"
+  | "problem_solving_scenario"
+  | "role_simulation"
+  | "behavioral_question";
+
+export interface VoiceResponseScoreBreakdown {
+  communicationClarity: number;
+  technicalDepth: number;
+  problemSolvingStructure: number;
+  businessUnderstanding: number;
+}
+
+export interface VoiceTranscriptTurn {
+  id: UUID;
+  role: "assistant" | "candidate";
+  kind: "greeting" | "question" | "follow_up" | "response" | "closing";
+  text: string;
+  category?: VoiceInterviewCategory | null;
+  linkedQuestionId?: UUID | null;
+  scores?: VoiceResponseScoreBreakdown | null;
+  createdAt: string;
+}
+
+export interface VoiceInterviewTranscriptDocument {
+  format: "voice_interview_v1";
+  transcriptText: string;
+  turns: VoiceTranscriptTurn[];
+  items: Array<{
+    question: string;
+    answer: string;
+    evaluationScore: number;
+    category?: VoiceInterviewCategory | null;
+    askedAsFollowUp?: boolean;
+    rationale?: string | null;
+    scoreBreakdown?: VoiceResponseScoreBreakdown | null;
+  }>;
 }
 
 export interface InterviewSession {
@@ -126,6 +228,7 @@ export interface InterviewSession {
   overallScore: number | null;
   summary: string | null;
   transcript: string | null;
+  structuredTranscript?: VoiceInterviewTranscriptDocument | null;
   createdAt: string;
   updatedAt: string;
   items?: InterviewQuestionAnswer[];
@@ -142,11 +245,32 @@ export interface CandidateInsight {
   claimVerificationFlags: Array<Record<string, unknown>>;
   suggestedManagerQuestions: string[];
   hiringRecommendation: string | null;
+  candidateScore?: CandidateScore | null;
   applicationHistory: Array<{
     jobTitle: string;
     status: string;
     appliedAt: string;
   }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScreeningResultDetail {
+  id: UUID;
+  applicationId: UUID;
+  candidateId: UUID;
+  jobId: UUID;
+  semanticSimilarity: number;
+  experienceMatch: number;
+  skillsMatch: number;
+  domainMatch: number;
+  achievementsMatch: number;
+  finalScore: number;
+  resumeAnalysis: Record<string, unknown>;
+  jobAnalysis: Record<string, unknown>;
+  reasoningSummary: string | null;
+  strengths: string[];
+  weaknesses: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -251,6 +375,7 @@ export interface HrCandidateDetail {
   insight: CandidateInsight | null;
   applications: HrCandidateApplicationHistoryItem[];
   interviews: InterviewSession[];
+  screeningResults: ScreeningResultDetail[];
 }
 
 export interface HrAnalyticsData {
@@ -339,6 +464,9 @@ export interface CreateCandidateInput {
 export interface CreateApplicationInput {
   candidateId: UUID;
   jobId: UUID;
+  resumeUrl?: string | null;
+  expectedCtc?: number | null;
+  joiningDate?: string | null;
   resumeMatchScore?: number | null;
   qualificationPassed?: boolean | null;
   qualificationAnswers?: QualificationAnswers | null;
@@ -366,10 +494,15 @@ export interface CompleteInterviewSessionInput {
   confidenceScore: number;
   summary: string;
   transcript: string;
+  voiceTranscript?: VoiceTranscriptTurn[];
   items: Array<{
     question: string;
     answer: string;
     evaluationScore: number;
+    category?: VoiceInterviewCategory | null;
+    askedAsFollowUp?: boolean;
+    rationale?: string | null;
+    scoreBreakdown?: VoiceResponseScoreBreakdown | null;
   }>;
 }
 
@@ -385,6 +518,53 @@ export interface UpsertCandidateInsightInput {
   hiringRecommendation?: string | null;
 }
 
+export interface UpsertCandidateScoreInput {
+  applicationId: UUID;
+  candidateId: UUID;
+  jobId: UUID;
+  roleCapability: number;
+  thinkingBehavior: number;
+  impact: number;
+  transferability: number;
+  potential: number;
+  finalScore: number;
+  confidenceScore: number;
+  confidenceLabel: string;
+  summary?: string | null;
+  recommendation?: string | null;
+  componentBreakdown: CandidateScore["componentBreakdown"];
+  evidenceSummary?: string[];
+}
+
+export interface ReplaceInterviewEvaluationsInput {
+  sessionId: UUID;
+  items: Array<{
+    interviewItemId?: UUID | null;
+    question: string;
+    answer: string;
+    score: number;
+    rationale: string;
+    evidence?: string[];
+  }>;
+}
+
+export interface UpsertScreeningResultInput {
+  applicationId: UUID;
+  candidateId: UUID;
+  jobId: UUID;
+  semanticSimilarity: number;
+  experienceMatch: number;
+  skillsMatch: number;
+  domainMatch: number;
+  achievementsMatch: number;
+  finalScore: number;
+  resumeAnalysis?: Record<string, unknown>;
+  jobAnalysis?: Record<string, unknown>;
+  reasoningSummary?: string | null;
+  strengths?: string[];
+  weaknesses?: string[];
+}
+
 export interface CreateEmailEventInput {
   applicationId?: UUID | null;
   candidateId?: UUID | null;
@@ -394,4 +574,95 @@ export interface CreateEmailEventInput {
   status?: "PENDING" | "SENT" | "FAILED";
   metadata?: Record<string, unknown>;
   sentAt?: string | null;
+}
+
+export type ManagerJobCreationMode = "CONVERSATIONAL_AI" | "STRUCTURED_INPUT";
+
+export type ManagerJobFeedbackAction =
+  | "TOO_GENERIC"
+  | "TOO_COMPLEX"
+  | "IMPROVE_RESPONSIBILITIES"
+  | "MAKE_MORE_OUTCOME_FOCUSED";
+
+export interface ManagerPipelineDistributionItem {
+  status: string;
+  label: string;
+  count: number;
+}
+
+export interface ManagerJobDashboardItem {
+  id: UUID;
+  title: string;
+  status: JobStatus;
+  location: string | null;
+  createdAt: string;
+  updatedAt: string;
+  applicantsCount: number;
+  shortlistedCount: number;
+  descriptionPreview: string;
+  pipelineDistribution: ManagerPipelineDistributionItem[];
+}
+
+export interface ManagerDashboardData {
+  summary: {
+    activeJobDescriptions: number;
+    totalApplicants: number;
+    shortlistedCandidates: number;
+    pendingApproval: number;
+  };
+  jobs: ManagerJobDashboardItem[];
+}
+
+export interface ManagerJobCandidateEntry {
+  applicationId: UUID;
+  candidateId: UUID;
+  candidateName: string;
+  currentCompany: string | null;
+  currentTitle: string | null;
+  status: ApplicationStatus;
+  resumeScore: number | null;
+  interviewScore: number | null;
+  insightSummary: string;
+}
+
+export interface ManagerJobIntelligenceDetail {
+  job: ManagerJobDashboardItem;
+  candidates: ManagerJobCandidateEntry[];
+}
+
+export interface ManagerJobDescriptionVariant {
+  id: string;
+  label: string;
+  tone: string;
+  summary: string;
+  description: string;
+  responsibilities: string[];
+  focusAreas: string[];
+  feedbackApplied: ManagerJobFeedbackAction[];
+}
+
+export interface ManagerJobDraftRequest {
+  mode: ManagerJobCreationMode;
+  title: string;
+  department?: string | null;
+  location?: string | null;
+  employmentType?: EmploymentType;
+  minExperienceYears?: number | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  currency?: string | null;
+  joiningTimeline?: string | null;
+  relocationRequired?: boolean;
+  intakeAnswers: JobIntakeAnswer[];
+}
+
+export interface ManagerJobDraftResponse {
+  job: Job;
+  variants: ManagerJobDescriptionVariant[];
+  selectedVariantId: string;
+}
+
+export interface RefineManagerJobDescriptionRequest {
+  selectedVariantId: string;
+  feedback: ManagerJobFeedbackAction;
 }

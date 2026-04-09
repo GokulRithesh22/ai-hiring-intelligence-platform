@@ -12,6 +12,9 @@ interface ApplicationRow {
   id: string;
   job_id: string;
   candidate_id: string;
+  resume_url: string | null;
+  expected_ctc: string | null;
+  joining_date: string | Date | null;
   status: ApplicationStatus;
   resume_match_score: string | null;
   qualification_passed: boolean | null;
@@ -27,6 +30,14 @@ function mapApplication(row: ApplicationRow): Application {
     id: row.id,
     jobId: row.job_id,
     candidateId: row.candidate_id,
+    resumeUrl: row.resume_url,
+    expectedCtc: toNumber(row.expected_ctc),
+    joiningDate:
+      row.joining_date == null
+        ? null
+        : typeof row.joining_date === "string"
+          ? row.joining_date
+          : row.joining_date.toISOString(),
     status: row.status,
     resumeMatchScore: toNumber(row.resume_match_score),
     qualificationPassed: row.qualification_passed,
@@ -58,32 +69,44 @@ export class ApplicationsRepository {
         INSERT INTO applications (
           candidate_id,
           job_id,
+          resume_url,
+          expected_ctc,
+          joining_date,
           resume_match_score,
           qualification_passed,
           qualification_answers,
           screening_decision_reason,
           status
         )
-        VALUES ($1, $2, $3, $4, $5::jsonb, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9, $10)
         ON CONFLICT (job_id, candidate_id)
         DO UPDATE SET
+          resume_url = EXCLUDED.resume_url,
+          expected_ctc = EXCLUDED.expected_ctc,
+          joining_date = EXCLUDED.joining_date,
           resume_match_score = EXCLUDED.resume_match_score,
           qualification_passed = EXCLUDED.qualification_passed,
           qualification_answers = EXCLUDED.qualification_answers,
           screening_decision_reason = EXCLUDED.screening_decision_reason,
+          status = EXCLUDED.status,
           updated_at = NOW()
         RETURNING *
       `,
       [
         input.candidateId,
         input.jobId,
+        input.resumeUrl ?? null,
+        input.expectedCtc ?? null,
+        input.joiningDate ?? null,
         input.resumeMatchScore ?? null,
         input.qualificationPassed ?? null,
         input.qualificationAnswers ? JSON.stringify(input.qualificationAnswers) : null,
         input.screeningDecisionReason ?? null,
         input.resumeMatchScore !== null && input.resumeMatchScore !== undefined && input.resumeMatchScore < 70
           ? "SCREENING_FAILED"
-          : "APPLIED"
+          : input.qualificationPassed === false
+            ? "QUALIFICATION_FAILED"
+            : "APPLIED"
       ]
     );
 

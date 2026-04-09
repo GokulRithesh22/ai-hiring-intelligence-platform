@@ -40,6 +40,7 @@ export function buildInterviewEvaluationPrompt(input: InterviewEvaluationInput):
       "You are evaluating an AI interview for a hiring intelligence platform.",
       "Assess communication, role knowledge, and confidence separately.",
       "Score answers consistently and ground every judgment in the transcript.",
+      "For each answer evaluation, include short evidence snippets from the candidate response.",
       "Do not inflate scores to be polite."
     ].join(" "),
     userPrompt: [
@@ -49,6 +50,7 @@ export function buildInterviewEvaluationPrompt(input: InterviewEvaluationInput):
       "- 70-84: mostly solid with some gaps",
       "- 50-69: mixed signal",
       "- below 50: weak evidence for this role",
+      "Return concise evidence snippets for each question that justify the score.",
       "",
       "Job context:",
       formatJson(input.job),

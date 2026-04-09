@@ -162,7 +162,8 @@ export class AIHiringIntelligenceService {
         overallScore: clampScore(result.data.overallScore),
         answerEvaluations: result.data.answerEvaluations.map((item) => ({
           ...item,
-          score: clampScore(item.score)
+          score: clampScore(item.score),
+          evidence: item.evidence ?? []
         }))
       })
     };

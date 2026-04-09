@@ -12,8 +12,11 @@ import type {
   ManagerQuestionSuggestionResult,
   QualificationEvaluationInput,
   QualificationEvaluationResult,
+  SemanticScreeningBreakdown,
   ResumeScreeningInput,
-  ResumeScreeningResult
+  ResumeScreeningResult,
+  StructuredJobDescriptionAnalysis,
+  StructuredResumeAnalysis
 } from "../domain/contracts.js";
 import { clampScore, listToSentence, normalizeWhitespace } from "../utils/prompt.js";
 
@@ -197,6 +200,99 @@ export function createMockResumeScreeningResult(
       input.candidate.yearsOfExperience != null ? `${input.candidate.yearsOfExperience} years of stated experience.` : "Years of experience were not explicitly provided."
     ],
     claimVerificationFlags
+  };
+}
+
+export function createMockStructuredResumeAnalysis(
+  resumeText: string
+): StructuredResumeAnalysis {
+  const lowered = resumeText.toLowerCase();
+  const experienceMatch = resumeText.match(/\b([0-9]{1,2})\+?\s+years?\b/i);
+  return {
+    experienceYears: experienceMatch ? Number(experienceMatch[1]) : 5,
+    roles: lowered.includes("marketing")
+      ? ["Growth Marketing Manager", "CRM Specialist"]
+      : ["Operations Manager"],
+    skills: [
+      ...(lowered.includes("lifecycle") ? ["Lifecycle Marketing"] : []),
+      ...(lowered.includes("retention") ? ["Retention Strategy"] : []),
+      ...(lowered.includes("crm") ? ["CRM Automation"] : []),
+      ...(lowered.includes("analytics") ? ["Analytics"] : []),
+      ...(lowered.includes("experimentation") ? ["Experimentation"] : [])
+    ],
+    industries: lowered.includes("saas") ? ["B2B SaaS"] : ["General technology"],
+    achievements: /\b\d+%/.test(resumeText)
+      ? ["Demonstrated measurable impact in role outcomes."]
+      : ["Shows execution ownership in past work."],
+    toolsUsed: [
+      ...(lowered.includes("hubspot") ? ["HubSpot"] : []),
+      ...(lowered.includes("salesforce") ? ["Salesforce"] : []),
+      ...(lowered.includes("sql") ? ["SQL"] : [])
+    ],
+    education: ["Education details captured from resume."]
+  };
+}
+
+export function createMockStructuredJobDescriptionAnalysis(input: {
+  jobTitle: string;
+  jobDescription: string;
+}): StructuredJobDescriptionAnalysis {
+  const lowered = `${input.jobTitle} ${input.jobDescription}`.toLowerCase();
+  const experienceMatch = lowered.match(/\b([0-9]{1,2})\s*(?:to|-)\s*([0-9]{1,2})\b/);
+  return {
+    requiredExperience: experienceMatch ? Number(experienceMatch[1]) : 4,
+    requiredSkills: [
+      ...(lowered.includes("lifecycle") ? ["Lifecycle Marketing"] : []),
+      ...(lowered.includes("retention") ? ["Retention Strategy"] : []),
+      ...(lowered.includes("crm") ? ["CRM Automation"] : []),
+      ...(lowered.includes("analytics") ? ["Analytics"] : []),
+      ...(lowered.includes("experimentation") ? ["Experimentation"] : [])
+    ],
+    preferredSkills: lowered.includes("leadership") ? ["Leadership"] : [],
+    domain: lowered.includes("saas") ? ["B2B SaaS"] : ["Technology"],
+    toolsRequired: [
+      ...(lowered.includes("hubspot") ? ["HubSpot"] : []),
+      ...(lowered.includes("salesforce") ? ["Salesforce"] : []),
+      ...(lowered.includes("sql") ? ["SQL"] : [])
+    ]
+  };
+}
+
+export function createMockSemanticScreeningBreakdown(input: {
+  resumeAnalysis: StructuredResumeAnalysis;
+  jobAnalysis: StructuredJobDescriptionAnalysis;
+  semanticSimilarity: number;
+}): SemanticScreeningBreakdown {
+  const skillOverlap = input.jobAnalysis.requiredSkills.filter((skill) =>
+    input.resumeAnalysis.skills.some((candidateSkill) =>
+      candidateSkill.toLowerCase() === skill.toLowerCase()
+    )
+  ).length;
+  const requiredSkillCount = Math.max(1, input.jobAnalysis.requiredSkills.length);
+  const experienceRatio = input.jobAnalysis.requiredExperience === 0
+    ? 1
+    : Math.min(1, input.resumeAnalysis.experienceYears / input.jobAnalysis.requiredExperience);
+  const domainHit = input.jobAnalysis.domain.some((domain) =>
+    input.resumeAnalysis.industries.some((industry) =>
+      industry.toLowerCase().includes(domain.toLowerCase()) ||
+      domain.toLowerCase().includes(industry.toLowerCase())
+    )
+  );
+
+  return {
+    experienceMatch: clampScore(experienceRatio * 100),
+    skillsMatch: clampScore((skillOverlap / requiredSkillCount) * 100),
+    domainMatch: domainHit ? 82 : 58,
+    achievementsMatch: clampScore(input.semanticSimilarity * 0.9),
+    strengths: [
+      "Resume trajectory maps to the job scope semantically.",
+      "Candidate evidence includes measurable outcomes relevant to the role."
+    ],
+    weaknesses: [
+      "Some required capabilities may need validation in interview."
+    ],
+    reasoningSummary:
+      "Candidate shows a meaningful semantic fit to the role based on structured experience, domain context, and outcome-driven evidence."
   };
 }
 

@@ -12,6 +12,10 @@ export function createOpenAIClient() {
     apiKey: config.openAiApiKey,
     ...(config.openAiBaseUrl ? { baseURL: config.openAiBaseUrl } : {}),
     ...(config.openAiOrganization ? { organization: config.openAiOrganization } : {}),
-    ...(config.openAiProject ? { project: config.openAiProject } : {})
+    ...(config.openAiProject ? { project: config.openAiProject } : {}),
+    defaultHeaders: {
+      ...(config.appTitle ? { "X-Title": config.appTitle } : {}),
+      ...(config.appBaseUrl ? { "HTTP-Referer": config.appBaseUrl } : {})
+    }
   });
 }
