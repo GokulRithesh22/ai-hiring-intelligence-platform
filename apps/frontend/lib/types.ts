@@ -107,7 +107,12 @@ export type ManagerJobCardData = {
 };
 
 export type ManagerDashboardData = {
-  metrics: ManagerDashboardMetric[];
+  metrics?: ManagerDashboardMetric[];
+  summary?: {
+    activeJobDescriptions: number;
+    totalApplicants: number;
+    shortlistedCandidates: number;
+  };
   jobs: ManagerJobCardData[];
 };
 
