@@ -39,7 +39,7 @@ const structuredPrompts: Record<string, string> = {
 };
 
 export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
-  const [mode, setMode] = useState<ManagerCreationMode>("conversational");
+  const [mode, setMode] = useState<ManagerCreationMode>("structured");
   const [jobTitle, setJobTitle] = useState("Growth Marketing Manager");
   const [department, setDepartment] = useState("Growth and Revenue");
   const [location, setLocation] = useState("Bengaluru hybrid");
@@ -446,8 +446,16 @@ export function JobIntakeStudio({ questions }: JobIntakeStudioProps) {
 
         {!draft ? (
           <div className="empty-state">
-            Generate the job description to compare 2-3 AI variations and refine the one that best
-            fits the hiring context.
+            <div>
+              Generate the job description to compare 2-3 AI variations and refine the one that
+              best fits the hiring context.
+            </div>
+            {mode === "conversational" && !draftJobTitle ? (
+              <div className="muted" style={{ marginTop: 10 }}>
+                In conversational mode, start the AI intake first. For the fastest draft, switch to
+                structured input and generate immediately.
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="stack-lg">
