@@ -2,6 +2,22 @@ import { NextResponse } from "next/server";
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+function getFormString(value: FormDataEntryValue | null) {
+  return typeof value === "string" ? value : null;
+}
+
+function getUploadedFileName(value: FormDataEntryValue | null) {
+  if (!value || typeof value === "string") {
+    return null;
+  }
+
+  if ("name" in value && typeof value.name === "string") {
+    return value.name;
+  }
+
+  return null;
+}
+
 function buildAssociateCenterManagerDemoResponse(input: {
   jobId: string;
   resumeFileName: string | null;
@@ -91,8 +107,8 @@ export async function POST(
   const resumeFile = formData.get("resume");
   const fallbackResponse = buildAssociateCenterManagerDemoResponse({
     jobId,
-    resumeFileName: resumeFile instanceof File ? resumeFile.name : null,
-    fullName: typeof formData.get("fullName") === "string" ? (formData.get("fullName") as string) : null
+    resumeFileName: getUploadedFileName(resumeFile),
+    fullName: getFormString(formData.get("fullName"))
   });
 
   if (fallbackResponse) {
