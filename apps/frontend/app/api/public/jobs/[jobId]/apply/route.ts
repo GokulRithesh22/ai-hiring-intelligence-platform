@@ -23,10 +23,6 @@ function buildAssociateCenterManagerDemoResponse(input: {
   resumeFileName: string | null;
   fullName: string | null;
 }) {
-  if (input.jobId !== "associate-center-manager") {
-    return null;
-  }
-
   const normalizedFileName = input.resumeFileName?.toLowerCase() ?? "";
   const normalizedName = input.fullName?.trim().toLowerCase() ?? "";
 
@@ -73,7 +69,29 @@ function buildAssociateCenterManagerDemoResponse(input: {
     };
   }
 
-  return input.jobId === "associate-center-manager"
+  if (isMatchResume) {
+    return {
+      applicationId: "demo-app-associate-center-manager-match",
+      candidateId: "demo-candidate-rahul-verma",
+      interviewSessionId: null,
+      status: "qualified",
+      statusMessage:
+        "Application submitted successfully. You are eligible to continue to the AI interview.",
+      interviewInvitation:
+        "You qualified for the AI interview based on semantic resume screening and business rule checks.",
+      interviewQuestions: [
+        "Your resume suggests direct experience in fitness center and retail operations. Which project best shows you are ready for this Associate Center Manager role, and what outcome did you personally drive?",
+        "Tell me about a time you coordinated front desk staff, trainers, or support teams during a busy operating window. How did you keep service quality high?",
+        "A member raises a serious complaint during peak hours. How would you handle the situation while keeping center operations stable?",
+        "What operating metrics would you watch daily in your first month to improve retention, renewals, and member experience?",
+        "Describe a situation where you improved complaint resolution or member satisfaction. What did you change and how did you measure success?"
+      ]
+    };
+  }
+
+  return normalizedFileName.includes("associate-center-manager") ||
+    normalizedName.includes("rahul") ||
+    normalizedName.includes("karthik")
     ? {
         applicationId: "demo-app-associate-center-manager-match",
         candidateId: "demo-candidate-rahul-verma",
