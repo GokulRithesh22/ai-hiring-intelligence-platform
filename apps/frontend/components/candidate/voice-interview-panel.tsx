@@ -258,16 +258,19 @@ export function VoiceInterviewPanel({
 
       if (SpeechRecognitionCtor) {
         const speechRecognition = new SpeechRecognitionCtor();
-        speechRecognition.continuous = true;
-        speechRecognition.interimResults = true;
+        speechRecognition.continuous = false;
+        speechRecognition.interimResults = false;
         speechRecognition.lang = "en-IN";
         speechRecognition.onresult = (event) => {
-          let transcript = "";
+          const finalChunks: string[] = [];
           for (let index = event.resultIndex; index < event.results.length; index += 1) {
-            transcript += event.results[index]?.[0]?.transcript ?? "";
+            if (event.results[index]?.isFinal) {
+              finalChunks.push(event.results[index]?.[0]?.transcript ?? "");
+            }
           }
+          const transcript = finalChunks.join(" ").trim();
           if (transcript.trim()) {
-            recognizedTranscriptRef.current = `${recognizedTranscriptRef.current} ${transcript}`.trim();
+            recognizedTranscriptRef.current = transcript;
           }
         };
         speechRecognition.onerror = () => undefined;
@@ -610,13 +613,6 @@ export function VoiceInterviewPanel({
                   {turn.role === "assistant" ? "Interviewer" : "Candidate"}
                 </strong>
                 <div>{turn.text}</div>
-                {turn.scores ? (
-                  <div className="muted" style={{ marginTop: 8 }}>
-                    Clarity {turn.scores.communicationClarity} | Depth {turn.scores.technicalDepth} |
-                    Structure {turn.scores.problemSolvingStructure} | Business{" "}
-                    {turn.scores.businessUnderstanding}
-                  </div>
-                ) : null}
               </div>
             ))}
           </div>
@@ -698,49 +694,6 @@ export function VoiceInterviewPanel({
             </div>
           ) : null}
 
-          {!conversation.evaluation ? null : (
-            <div className="stack-lg">
-              <div className="score-grid">
-                <article className="score-card">
-                  <strong>{conversation.evaluation.communicationClarity}</strong>
-                  <span className="muted">Communication clarity</span>
-                </article>
-                <article className="score-card">
-                  <strong>{conversation.evaluation.technicalDepth}</strong>
-                  <span className="muted">Technical depth</span>
-                </article>
-                <article className="score-card">
-                  <strong>{conversation.evaluation.problemSolvingStructure}</strong>
-                  <span className="muted">Problem-solving structure</span>
-                </article>
-                <article className="score-card">
-                  <strong>{conversation.evaluation.businessUnderstanding}</strong>
-                  <span className="muted">Business understanding</span>
-                </article>
-              </div>
-
-              <article className="question-item">
-                <strong>Interview summary</strong>
-                <p className="muted">{conversation.evaluation.summary}</p>
-              </article>
-
-              <div className="question-list">
-                {conversation.evaluation.responseEvaluations.map((entry) => (
-                  <article className="question-item" key={entry.questionId}>
-                    <strong>{entry.question}</strong>
-                    <p className="muted">{entry.rationale}</p>
-                    <p className="muted">
-                      Overall {entry.evaluationScore} | Clarity{" "}
-                      {entry.scoreBreakdown.communicationClarity} | Depth{" "}
-                      {entry.scoreBreakdown.technicalDepth} | Structure{" "}
-                      {entry.scoreBreakdown.problemSolvingStructure} | Business{" "}
-                      {entry.scoreBreakdown.businessUnderstanding}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            </div>
-          )}
         </>
       )}
     </section>
