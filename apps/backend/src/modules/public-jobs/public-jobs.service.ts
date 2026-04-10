@@ -144,7 +144,21 @@ export class PublicJobsService {
       };
     }
 
-    const interviewSession = await applicationsService.startInterview(updatedApplication.id);
+    let interviewSessionId: string | null = null;
+    let interviewQuestions: string[] = [];
+
+    try {
+      const interviewSession = await applicationsService.startInterview(updatedApplication.id);
+      interviewSessionId = interviewSession?.id ?? null;
+      interviewQuestions = (interviewSession?.items ?? []).map((item) => item.question);
+    } catch {
+      interviewQuestions = buildPublicFallbackInterviewQuestions({
+        jobTitle: job.title,
+        resumeText: payload.resumeText,
+        strengths: screening.strengths ?? [],
+        weaknesses: screening.weaknesses ?? []
+      });
+    }
 
     return {
       applicationId: updatedApplication.id,
@@ -154,8 +168,8 @@ export class PublicJobsService {
         "Application submitted successfully. You are eligible to continue to the AI interview.",
       interviewInvitation:
         "You qualified for the AI interview based on semantic resume screening and business rule checks.",
-      interviewSessionId: interviewSession?.id ?? null,
-      interviewQuestions: (interviewSession?.items ?? []).map((item) => item.question)
+      interviewSessionId,
+      interviewQuestions
     };
   }
 
@@ -246,4 +260,24 @@ function differenceInDays(dateString: string): number {
 
   const milliseconds = target.getTime() - Date.now();
   return Math.max(0, Math.ceil(milliseconds / (1000 * 60 * 60 * 24)));
+}
+
+function buildPublicFallbackInterviewQuestions(input: {
+  jobTitle: string;
+  resumeText: string;
+  strengths: string[];
+  weaknesses: string[];
+}) {
+  const firstStrength = input.strengths[0] ?? `your fit for the ${input.jobTitle} role`;
+  const firstWeakness =
+    input.weaknesses[0] ?? "one area where you had to adapt or learn quickly";
+  const resumeSignal = input.resumeText.replace(/\s+/g, " ").trim().slice(0, 140);
+
+  return [
+    `Your resume suggests strength around ${firstStrength}. Which project best proves that, and what result did you personally drive?`,
+    `Tell me about a time you handled ${firstWeakness} and how you closed the gap.`,
+    `For this ${input.jobTitle} role, how would you approach the first 30 days on the job?`,
+    `Walk me through a difficult stakeholder or customer situation you handled and the outcome you achieved.`,
+    `I noticed ${resumeSignal || "relevant operational experience in your background"}. What decisions did you make personally, and how did you measure success?`
+  ];
 }

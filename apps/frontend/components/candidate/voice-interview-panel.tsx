@@ -192,7 +192,7 @@ export function VoiceInterviewPanel({
         const nextConversation = await startVoiceInterviewConversation({
           questions,
           interviewSessionId,
-          applicationId
+          applicationId: interviewSessionId ? applicationId : null
         });
         spokenTurnIdsRef.current = new Set();
         setConversation(nextConversation);
