@@ -6,8 +6,7 @@ import {
   getVoiceInterviewConfig,
   startVoiceInterviewConversation,
   submitVoiceInterviewTurn,
-  synthesizeVoicePrompt,
-  transcribeVoiceAnswer
+  synthesizeVoicePrompt
 } from "@/lib/api-adapters";
 import type {
   VoiceInterviewConfig,
@@ -44,23 +43,6 @@ type BrowserWindow = Window & {
   SpeechRecognition?: new () => BrowserSpeechRecognition;
   webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
 };
-
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const value = reader.result;
-      if (typeof value !== "string") {
-        reject(new Error("Failed to read audio blob"));
-        return;
-      }
-
-      resolve(value.split(",")[1] ?? "");
-    };
-    reader.onerror = () => reject(reader.error ?? new Error("Failed to read audio blob"));
-    reader.readAsDataURL(blob);
-  });
-}
 
 function responseCount(conversation: VoiceInterviewConversationState | null) {
   return conversation?.turns.filter((turn) => turn.role === "candidate").length ?? 0;
@@ -295,38 +277,28 @@ export function VoiceInterviewPanel({
       recorder.onstop = () => {
         void (async () => {
           try {
-            setStatus("Transcribing and analyzing your answer...");
+            setStatus("Processing your answer...");
             const mimeType = recorder.mimeType || "audio/webm";
             const blob = new Blob(chunksRef.current, { type: mimeType });
             if (blob.size === 0) {
               setStatus("No answer was detected. Please try responding again.");
+              setPhase("manual");
               return;
             }
-            const audioBase64 = await blobToBase64(blob);
             speechRecognitionRef.current?.stop();
             const browserTranscript = recognizedTranscriptRef.current.trim();
-            const transcript = browserTranscript
-              ? browserTranscript
-              : (
-                  await transcribeVoiceAnswer({
-                    audioBase64,
-                    mimeType,
-                    fileName: `voice-answer-${Date.now()}.webm`
-                  })
-                ).text.trim();
+            const transcript = browserTranscript;
 
             if (!transcript) {
-              setStatus("Voice capture missed that answer. Type your answer below to continue the demo.");
+              setStatus("Voice capture missed that answer. Type your answer below to continue.");
+              setPhase("manual");
               return;
             }
             await submitTranscriptAnswer(transcript);
           } catch (caughtError) {
-            setError(
-              caughtError instanceof Error
-                ? caughtError.message
-                : "Failed to process the recorded answer."
-            );
-            setStatus("Voice capture hit an issue. Type your answer below to continue the demo.");
+            setError(null);
+            setStatus("Voice capture hit an issue. Type your answer below to continue.");
+            setPhase("manual");
           } finally {
             cleanupRecordingMonitoring();
             speechRecognitionRef.current = null;
