@@ -27,9 +27,12 @@ type BrowserSpeechRecognition = {
   onresult: ((event: {
     resultIndex: number;
     results: ArrayLike<
-      ArrayLike<{
-        transcript: string;
-      }>
+      {
+        isFinal?: boolean;
+        [index: number]: {
+          transcript: string;
+        };
+      }
     >;
   }) => void) | null;
   onerror: (() => void) | null;
