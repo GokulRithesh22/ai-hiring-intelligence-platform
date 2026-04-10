@@ -63,6 +63,15 @@ function responseCount(conversation: VoiceInterviewConversationState | null) {
   return conversation?.turns.filter((turn) => turn.role === "candidate").length ?? 0;
 }
 
+type InterviewPhase =
+  | "idle"
+  | "starting"
+  | "speaking"
+  | "recording"
+  | "processing"
+  | "manual"
+  | "completed";
+
 export function VoiceInterviewPanel({
   questions,
   interviewSessionId,
@@ -71,6 +80,7 @@ export function VoiceInterviewPanel({
   const [config, setConfig] = useState<VoiceInterviewConfig | null>(null);
   const [conversation, setConversation] = useState<VoiceInterviewConversationState | null>(null);
   const [status, setStatus] = useState("Ready to begin the conversational interview.");
+  const [phase, setPhase] = useState<InterviewPhase>("idle");
   const [recording, setRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -82,7 +92,6 @@ export function VoiceInterviewPanel({
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const spokenTurnIdsRef = useRef<Set<string>>(new Set());
-  const autoRecordedTurnIdsRef = useRef<Set<string>>(new Set());
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const monitorFrameRef = useRef<number | null>(null);
@@ -120,6 +129,8 @@ export function VoiceInterviewPanel({
 
     void (async () => {
       setIsSpeaking(true);
+      setPhase("speaking");
+      let anyPlaybackFailed = false;
 
       for (const turn of turnsToSpeak) {
         if (cancelled) {
@@ -133,6 +144,7 @@ export function VoiceInterviewPanel({
         const played = await playPrompt(turn.text, config);
         setAudioAvailable(played);
         setPlaybackFailed(!played);
+        anyPlaybackFailed = anyPlaybackFailed || !played;
         if (!played) {
           setStatus("Question ready. Audio playback was blocked, so use Replay prompt if needed.");
         }
@@ -140,9 +152,18 @@ export function VoiceInterviewPanel({
 
       if (!cancelled) {
         setIsSpeaking(false);
-        setStatus((current) =>
-          current.startsWith("AI is") ? conversation?.status ?? current : current
-        );
+        if (conversation?.completed) {
+          setPhase("completed");
+          setStatus(conversation.status);
+          return;
+        }
+
+        setStatus(anyPlaybackFailed ? "Question ready. Answer when you are ready." : "Prompt ready");
+        window.setTimeout(() => {
+          if (!cancelled) {
+            void startRecording();
+          }
+        }, 500);
       }
     })();
 
@@ -151,33 +172,11 @@ export function VoiceInterviewPanel({
     };
   }, [config, conversation]);
 
-  useEffect(() => {
-    const latestQuestionTurn = [...(conversation?.turns ?? [])]
-      .reverse()
-      .find((turn) => turn.role === "assistant" && turn.kind === "question");
-
-    if (!conversation || conversation.completed || isSpeaking || recording || !latestQuestionTurn) {
-      return;
-    }
-
-    if (autoRecordedTurnIdsRef.current.has(latestQuestionTurn.id)) {
-      return;
-    }
-
-    autoRecordedTurnIdsRef.current.add(latestQuestionTurn.id);
-    const timeout = window.setTimeout(() => {
-      void startRecording();
-    }, 450);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [conversation, isSpeaking, recording]);
-
   const startInterview = () => {
     setError(null);
     setManualAnswer("");
     setStatus("Starting conversational interview...");
+    setPhase("starting");
 
     startTransition(async () => {
       try {
@@ -196,9 +195,9 @@ export function VoiceInterviewPanel({
           applicationId
         });
         spokenTurnIdsRef.current = new Set();
-        autoRecordedTurnIdsRef.current = new Set();
         setConversation(nextConversation);
         setStatus(nextConversation.status);
+        setPhase(nextConversation.completed ? "completed" : "speaking");
       } catch (caughtError) {
         setError(
           caughtError instanceof Error
@@ -206,6 +205,7 @@ export function VoiceInterviewPanel({
             : "Failed to start the voice interview."
         );
         setStatus("Unable to start the interview.");
+        setPhase("idle");
       }
     });
   };
@@ -329,19 +329,26 @@ export function VoiceInterviewPanel({
       recorder.start();
       beginSilenceMonitoring(mediaStream, recorder);
       setRecording(true);
+      setPhase("recording");
       setStatus("Listening... answer naturally and pause when you are done.");
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : "Microphone access was not granted."
       );
-      setStatus("Microphone access is required to continue.");
+      setStatus("We couldn't start voice capture. Type your answer to continue.");
+      setPhase("manual");
     }
   };
 
   const stopRecording = () => {
+    if (!recording) {
+      return;
+    }
+
     speechRecognitionRef.current?.stop();
     recorderRef.current?.stop();
     setRecording(false);
+    setPhase("processing");
   };
 
   const replayPrompt = () => {
@@ -354,6 +361,7 @@ export function VoiceInterviewPanel({
     setError(null);
     startTransition(async () => {
       setIsSpeaking(true);
+      setPhase("speaking");
       setStatus("Playing the current question...");
       const played = await playPrompt(prompt, config);
       setIsSpeaking(false);
@@ -364,6 +372,9 @@ export function VoiceInterviewPanel({
           ? "Question replayed. You can answer now."
           : "Question ready. Audio playback was blocked, but you can still read and answer."
       );
+      window.setTimeout(() => {
+        void startRecording();
+      }, 500);
     });
   };
 
@@ -380,12 +391,14 @@ export function VoiceInterviewPanel({
     setConversation(nextConversation);
     setStatus(nextConversation.status);
     setManualAnswer("");
+    setPhase(nextConversation.completed ? "completed" : "speaking");
   };
 
   const submitManualAnswer = () => {
     setError(null);
     startTransition(async () => {
       try {
+        setPhase("processing");
         setStatus("Submitting your answer...");
         await submitTranscriptAnswer(manualAnswer);
       } catch (caughtError) {
@@ -395,6 +408,7 @@ export function VoiceInterviewPanel({
             : "Failed to submit the typed answer."
         );
         setStatus("We couldn't submit that answer. Please try again.");
+        setPhase("manual");
       }
     });
   };
@@ -487,6 +501,11 @@ export function VoiceInterviewPanel({
     monitorFrameRef.current = window.requestAnimationFrame(monitor);
   };
 
+  const showTypedFallback =
+    Boolean(conversation) &&
+    !conversation?.completed &&
+    (phase === "manual" || playbackFailed || Boolean(error));
+
   return (
     <section className="form-section card stack-lg">
       <div className="panel-heading">
@@ -516,13 +535,27 @@ export function VoiceInterviewPanel({
         </article>
         <article>
           <span className="subtle-label">Current mode</span>
-          <strong>{recording ? "Recording" : isSpeaking ? "AI speaking" : "Awaiting candidate"}</strong>
+          <strong>
+            {phase === "recording"
+              ? "Recording"
+              : phase === "speaking"
+                ? "AI speaking"
+                : phase === "processing"
+                  ? "Processing answer"
+                  : phase === "manual"
+                    ? "Type answer"
+                    : "Awaiting candidate"}
+          </strong>
           <span className="muted">
-            {conversation?.currentPrompt
-              ? recording
-                ? "Mic is open and listening for your answer"
-                : "The AI prompt is active and the call flow continues automatically"
-              : "Start the loop to begin"}
+            {phase === "recording"
+              ? "Mic is open and listening for your answer"
+              : phase === "processing"
+                ? "Your answer is being transcribed and sent to the interview engine"
+                : phase === "manual"
+                  ? "Use typed fallback if browser voice capture misses the answer"
+                  : conversation?.currentPrompt
+                    ? "The AI prompt is active and the call flow continues automatically"
+                    : "Start the loop to begin"}
           </span>
         </article>
         <article>
@@ -585,7 +618,7 @@ export function VoiceInterviewPanel({
                 className="button button-secondary"
                 type="button"
                 onClick={replayPrompt}
-                disabled={isPending || recording || isSpeaking}
+                disabled={isPending || phase === "recording" || phase === "processing" || isSpeaking}
               >
                 Replay prompt
               </button>
@@ -594,19 +627,35 @@ export function VoiceInterviewPanel({
               <button className="button button-primary" type="button" onClick={startInterview}>
                 Restart interview
               </button>
-            ) : (
+            ) : phase === "recording" ? (
               <button className="button button-secondary" type="button" onClick={stopRecording}>
                 End answer now
               </button>
+            ) : null}
+            {!conversation.completed && phase === "manual" ? (
+              <button
+                className="button button-secondary"
+                type="button"
+                onClick={() => {
+                  setError(null);
+                  setStatus("Trying voice capture again...");
+                  void startRecording();
+                }}
+                disabled={isPending}
+              >
+                Try voice again
+              </button>
             )}
             <span className="muted">
-              {playbackFailed
-                ? "The interview runs automatically. Replay prompt is only shown when browser audio playback is blocked."
-                : "Once the interview starts, the AI speaks, listens, and advances automatically like a phone conversation."}
+              {phase === "recording"
+                ? "Speak naturally and pause when you are done."
+                : playbackFailed
+                  ? "The interview runs automatically. Replay prompt is only shown when browser audio playback is blocked."
+                  : "Once the interview starts, the AI speaks, listens, and advances automatically like a phone conversation."}
             </span>
           </div>
 
-          {!conversation.completed ? (
+          {showTypedFallback ? (
             <div className="stack" style={{ gap: 12 }}>
               <label className="subtle-label" htmlFor="manual-answer">
                 Type your answer
