@@ -125,7 +125,9 @@ export function RecruiterJobCreatePanel() {
   };
 
   const handlePublish = () => {
-    if (!draft?.jobId) {
+    const draftJobId = draft?.jobId;
+
+    if (!draftJobId) {
       return;
     }
 
@@ -134,7 +136,7 @@ export function RecruiterJobCreatePanel() {
       setMessage(null);
 
       try {
-        await updateRecruiterJobStatus(draft.jobId, "PUBLISHED");
+        await updateRecruiterJobStatus(draftJobId, "PUBLISHED");
         setMessage("Job published to the candidate landing page.");
       } catch (error) {
         setErrorMessage(error instanceof Error ? error.message : "Unable to publish job.");
