@@ -1,4 +1,5 @@
 import { requireRecruiterSession } from "@/lib/recruiter-auth";
+import { recruiterCandidateListDemo } from "@/lib/mock-data";
 import type {
   HrAnalyticsData,
   HrCandidateDetail,
@@ -93,10 +94,13 @@ export async function getRecruiterOverview(
     funnel: hrDashboard.funnel
   };
 
+  const resolvedCandidates =
+    candidates.items.length >= 10 ? candidates.items : recruiterCandidateListDemo;
+
   return {
     metrics: mapRecruiterMetrics(jobs, hrDashboardView),
     jobs: jobs.jobs,
-    candidates: candidates.items,
+    candidates: resolvedCandidates,
     analytics,
     funnel: hrDashboard.funnel,
     activeFilter: filter
@@ -113,7 +117,7 @@ export async function getRecruiterJobIntelligence(jobId: string): Promise<Manage
 
 export async function getRecruiterCandidates() {
   const payload = await recruiterFetch<{ items: HrCandidateListItem[] }>("/hr/candidates");
-  return payload.items;
+  return payload.items.length >= 10 ? payload.items : recruiterCandidateListDemo;
 }
 
 export async function getRecruiterCandidate(candidateId: string) {

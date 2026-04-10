@@ -5,6 +5,7 @@ import type {
   DashboardCandidate,
   GeneratedJobDescription,
   HrDashboardData,
+  HrCandidateListItem,
   JobIntakeQuestion,
   LandingContent,
   PublicJobCard,
@@ -378,6 +379,325 @@ export const candidateProfile: CandidateProfileData = {
       "Best follow-up areas: planning cadence, forecasting discipline, and evidence behind reported revenue impact."
     ]
   }
+};
+
+export const recruiterCandidateListDemo: HrCandidateListItem[] = [
+  {
+    id: "demo-candidate-rahul-verma",
+    name: "Rahul Verma",
+    email: "rahul.verma.demo@gmail.com",
+    currentCompany: "FitZone Wellness",
+    latestJobTitle: "Associate Center Manager",
+    latestApplicationStatus: "SHORTLISTED",
+    resumeScore: 88,
+    interviewScore: 84,
+    candidateScore: 86,
+    candidateScoreConfidenceLabel: "HIGH",
+    appliedAt: "2026-04-09T07:45:00.000Z"
+  },
+  {
+    id: "demo-candidate-priya-nair",
+    name: "Priya Nair",
+    email: "priya.nair.demo@gmail.com",
+    currentCompany: "Pulse Active",
+    latestJobTitle: "Center Operations Lead",
+    latestApplicationStatus: "INTERVIEW_COMPLETED",
+    resumeScore: 85,
+    interviewScore: 81,
+    candidateScore: 82,
+    candidateScoreConfidenceLabel: "HIGH",
+    appliedAt: "2026-04-08T11:20:00.000Z"
+  },
+  {
+    id: "demo-candidate-manoj-shetty",
+    name: "Manoj Shetty",
+    email: "manoj.shetty.demo@gmail.com",
+    currentCompany: "PowerFit Club",
+    latestJobTitle: "Center Manager",
+    latestApplicationStatus: "INTERVIEW_COMPLETED",
+    resumeScore: 83,
+    interviewScore: 79,
+    candidateScore: 80,
+    candidateScoreConfidenceLabel: "MEDIUM",
+    appliedAt: "2026-04-08T09:10:00.000Z"
+  },
+  {
+    id: "demo-candidate-neha-arora",
+    name: "Neha Arora",
+    email: "neha.arora.demo@gmail.com",
+    currentCompany: "Urban Fitness Studio",
+    latestJobTitle: "Member Experience Manager",
+    latestApplicationStatus: "SHORTLISTED",
+    resumeScore: 90,
+    interviewScore: 86,
+    candidateScore: 88,
+    candidateScoreConfidenceLabel: "HIGH",
+    appliedAt: "2026-04-07T14:30:00.000Z"
+  },
+  {
+    id: "demo-candidate-vivek-rao",
+    name: "Vivek Rao",
+    email: "vivek.rao.demo@gmail.com",
+    currentCompany: "Cult Fit",
+    latestJobTitle: "Assistant Center Manager",
+    latestApplicationStatus: "INTERVIEW_PENDING",
+    resumeScore: 78,
+    interviewScore: null,
+    candidateScore: 74,
+    candidateScoreConfidenceLabel: "MEDIUM",
+    appliedAt: "2026-04-07T08:15:00.000Z"
+  },
+  {
+    id: "demo-candidate-sneha-kulkarni",
+    name: "Sneha Kulkarni",
+    email: "sneha.kulkarni.demo@gmail.com",
+    currentCompany: "Anytime Fitness",
+    latestJobTitle: "Front Desk Supervisor",
+    latestApplicationStatus: "SCREENING",
+    resumeScore: 76,
+    interviewScore: null,
+    candidateScore: 71,
+    candidateScoreConfidenceLabel: "MEDIUM",
+    appliedAt: "2026-04-06T16:50:00.000Z"
+  },
+  {
+    id: "demo-candidate-farah-khan",
+    name: "Farah Khan",
+    email: "farah.khan.demo@gmail.com",
+    currentCompany: "Fit Republic",
+    latestJobTitle: "Operations Coordinator",
+    latestApplicationStatus: "APPLIED",
+    resumeScore: 73,
+    interviewScore: null,
+    candidateScore: null,
+    candidateScoreConfidenceLabel: null,
+    appliedAt: "2026-04-06T09:40:00.000Z"
+  },
+  {
+    id: "demo-candidate-aditi-sen",
+    name: "Aditi Sen",
+    email: "aditi.sen.demo@gmail.com",
+    currentCompany: "MoveWell Clubs",
+    latestJobTitle: "Member Success Lead",
+    latestApplicationStatus: "REJECTED",
+    resumeScore: 69,
+    interviewScore: 64,
+    candidateScore: 63,
+    candidateScoreConfidenceLabel: "MEDIUM",
+    appliedAt: "2026-04-05T12:05:00.000Z"
+  },
+  {
+    id: "demo-candidate-karthik-iyer",
+    name: "Karthik Iyer",
+    email: "karthik.iyer.demo@gmail.com",
+    currentCompany: "CloudNova Technologies",
+    latestJobTitle: "Senior Frontend Engineer",
+    latestApplicationStatus: "SCREENING_FAILED",
+    resumeScore: 42,
+    interviewScore: null,
+    candidateScore: null,
+    candidateScoreConfidenceLabel: null,
+    appliedAt: "2026-04-05T08:45:00.000Z"
+  },
+  {
+    id: "demo-candidate-deepak-joshi",
+    name: "Deepak Joshi",
+    email: "deepak.joshi.demo@gmail.com",
+    currentCompany: "FitBay",
+    latestJobTitle: "Operations Executive",
+    latestApplicationStatus: "APPLIED",
+    resumeScore: 67,
+    interviewScore: null,
+    candidateScore: null,
+    candidateScoreConfidenceLabel: null,
+    appliedAt: "2026-04-04T17:25:00.000Z"
+  }
+];
+
+function buildDemoCandidateProfile(
+  candidate: HrCandidateListItem,
+  overrides: Partial<CandidateProfileData> = {}
+): CandidateProfileData {
+  const appliedDate = candidate.appliedAt
+    ? new Date(candidate.appliedAt).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      })
+    : "Apr 09, 2026";
+  const resumeScore = candidate.resumeScore ?? 0;
+  const interviewScore = candidate.interviewScore ?? 0;
+  const finalScore = candidate.candidateScore ?? Math.round((resumeScore + interviewScore) / 2);
+  const recommendationLabel =
+    candidate.latestApplicationStatus === "SHORTLISTED"
+      ? "Recommended"
+      : candidate.latestApplicationStatus === "REJECTED" ||
+          candidate.latestApplicationStatus === "SCREENING_FAILED"
+        ? "Application received"
+        : "In review";
+
+  return {
+    ...candidateProfile,
+    id: candidate.id,
+    name: candidate.name,
+    currentRole: candidate.latestJobTitle ?? candidate.currentCompany ?? "Candidate profile",
+    location: "Bengaluru, India",
+    overview: `${candidate.name} is currently in ${candidate.latestApplicationStatus?.toLowerCase().replace(/_/g, " ") ?? "pipeline review"} for the Associate Center Manager demo role.`,
+    resumeScore: candidate.resumeScore != null ? `${candidate.resumeScore} / 100` : "Pending",
+    resumeSynopsis:
+      candidate.resumeScore != null
+        ? `Resume fit indicates ${candidate.resumeScore >= 80 ? "strong" : candidate.resumeScore >= 70 ? "workable" : "weak"} alignment with center operations, member experience, and people coordination.`
+        : "Resume screening is still pending.",
+    interviewScore: candidate.interviewScore != null ? `${candidate.interviewScore} / 100` : "Pending",
+    interviewSummary:
+      candidate.interviewScore != null
+        ? "Interview evidence is available with role, action, and outcome coverage."
+        : "AI interview has not been completed yet.",
+    applicationHistory: [
+      {
+        jobTitle: "Associate Center Manager",
+        date: appliedDate,
+        status: candidate.latestApplicationStatus ?? "APPLIED",
+        statusClass:
+          candidate.latestApplicationStatus === "SHORTLISTED"
+            ? "status-shortlisted"
+            : candidate.latestApplicationStatus === "REJECTED" ||
+                candidate.latestApplicationStatus === "SCREENING_FAILED"
+              ? "status-review"
+              : "status-progress",
+        notes:
+          candidate.candidateScore != null
+            ? `Resume ${candidate.resumeScore ?? "NA"}, final AI score ${candidate.candidateScore}.`
+            : "Candidate is still moving through the pipeline."
+      }
+    ],
+    resumeInsights:
+      candidate.latestApplicationStatus === "SCREENING_FAILED"
+        ? "Resume shows low domain fit for center operations and on-ground member handling."
+        : "Resume shows relevant evidence around center operations, staffing rhythm, service quality, and member issue handling.",
+    linkedInInsights: `LinkedIn profile on file for ${candidate.name}.`,
+    interviewTranscript:
+      candidate.interviewScore != null
+        ? [
+            {
+              question: "Tell me about a time you handled a center issue during a busy operating window.",
+              answer:
+                "I reset floor ownership, took the member escalation directly, and restored service flow before the next peak block.",
+              score: `${Math.max(7.2, interviewScore / 10).toFixed(1)} / 10`
+            },
+            {
+              question: "How do you track retention and member satisfaction week to week?",
+              answer:
+                "I review renewal risk, complaint patterns, trainer feedback, and unresolved service tickets together, then coach the front desk on the top friction points.",
+              score: `${Math.max(7.0, interviewScore / 10 - 0.2).toFixed(1)} / 10`
+            }
+          ]
+        : [],
+    claimVerification:
+      candidate.latestApplicationStatus === "SCREENING_FAILED"
+        ? "No further claim verification needed because the application did not progress."
+        : "Core claims are directionally consistent across resume and interview responses.",
+    suggestedQuestions:
+      candidate.interviewScore != null
+        ? [
+            "What exact metric did the candidate use to measure member satisfaction improvement?",
+            "How does the candidate prioritize retention versus issue resolution on peak days?",
+            "What proof can they share for operating discipline across trainers and front desk?"
+          ]
+        : [
+            "Probe for ownership of floor operations and service recovery.",
+            "Validate handling of renewals, complaints, and staff coordination.",
+            "Check readiness for Whitefield center operating tempo."
+          ],
+    scoreEngine: {
+      finalScore: candidate.candidateScore != null ? `${candidate.candidateScore} / 100` : "Pending",
+      confidence:
+        candidate.candidateScoreConfidenceLabel != null
+          ? `${candidate.candidateScoreConfidenceLabel === "HIGH" ? "84" : "71"}% (${candidate.candidateScoreConfidenceLabel})`
+          : "Pending",
+      roleCapability: candidate.resumeScore != null ? String(candidate.resumeScore) : "Pending",
+      thinkingBehavior: candidate.interviewScore != null ? String(candidate.interviewScore) : "Pending",
+      impact: candidate.candidateScore != null ? String(Math.max(58, candidate.candidateScore - 4)) : "Pending",
+      transferability: candidate.candidateScore != null ? String(Math.max(55, candidate.candidateScore - 6)) : "Pending",
+      potential: candidate.candidateScore != null ? String(Math.max(57, candidate.candidateScore - 2)) : "Pending",
+      evidence:
+        candidate.latestApplicationStatus === "SCREENING_FAILED"
+          ? ["Domain mismatch against fitness center operations.", "Resume did not show member-handling or floor ownership signals."]
+          : [
+              "Resume includes center operations or member-experience ownership.",
+              "Pipeline status reflects meaningful progression through screening and interview stages.",
+              candidate.interviewScore != null
+                ? "Interview transcript shows structured answers around service quality and issue handling."
+                : "Awaiting interview evidence for deeper decision support."
+            ]
+    },
+    scoreBreakdown: {
+      communication: candidate.interviewScore != null ? String(candidate.interviewScore) : "Pending",
+      knowledge: candidate.resumeScore != null ? String(candidate.resumeScore) : "Pending",
+      confidence: candidate.candidateScoreConfidenceLabel ?? "Pending",
+      overall: candidate.candidateScore != null ? String(finalScore) : "Pending"
+    },
+    recommendation: {
+      label: recommendationLabel,
+      title:
+        candidate.latestApplicationStatus === "SHORTLISTED"
+          ? "Move to recruiter close round"
+          : candidate.latestApplicationStatus === "SCREENING_FAILED" ||
+              candidate.latestApplicationStatus === "REJECTED"
+            ? "Do not advance"
+            : "Continue assessment",
+      summary:
+        candidate.latestApplicationStatus === "SHORTLISTED"
+          ? `${candidate.name} is one of the stronger demo profiles with enough evidence to explain resume fit, interview quality, and shortlist rationale.`
+          : candidate.latestApplicationStatus === "SCREENING_FAILED" ||
+              candidate.latestApplicationStatus === "REJECTED"
+            ? `${candidate.name} is useful in the demo as a contrast case showing why lower-fit applicants do not move forward.`
+            : `${candidate.name} helps explain the mid-pipeline state between application, screening, interview, and shortlist.`,
+      statusClass:
+        candidate.latestApplicationStatus === "SHORTLISTED"
+          ? "status-approved"
+          : candidate.latestApplicationStatus === "SCREENING_FAILED" ||
+              candidate.latestApplicationStatus === "REJECTED"
+            ? "status-review"
+            : "status-progress",
+      highlights: [
+        `Current stage: ${candidate.latestApplicationStatus?.replace(/_/g, " ") ?? "APPLIED"}.`,
+        `Current company: ${candidate.currentCompany ?? "Not captured"}.`,
+        candidate.candidateScore != null
+          ? `Final AI score available: ${candidate.candidateScore}.`
+          : "Final AI score not yet available."
+      ]
+    },
+    ...overrides
+  };
+}
+
+export const recruiterCandidateProfileDemo: Record<string, CandidateProfileData> = {
+  "demo-candidate-rahul-verma": buildDemoCandidateProfile(recruiterCandidateListDemo[0], {
+    overview:
+      "Strong operations profile with direct center-management evidence, solid interview completion, and a shortlist-ready decision trail.",
+    location: "Whitefield, Bengaluru"
+  }),
+  "demo-candidate-priya-nair": buildDemoCandidateProfile(recruiterCandidateListDemo[1], {
+    overview:
+      "Balanced operations candidate with member-experience depth and clean interview evidence that makes her easy to explain in the demo."
+  }),
+  "demo-candidate-manoj-shetty": buildDemoCandidateProfile(recruiterCandidateListDemo[2], {
+    overview:
+      "Experienced center operator who completed the AI interview and is waiting on final recruiter alignment."
+  }),
+  "demo-candidate-neha-arora": buildDemoCandidateProfile(recruiterCandidateListDemo[3], {
+    overview:
+      "High-signal candidate with strong shortlist status, strong fit on service recovery, and credible team-coordination evidence."
+  }),
+  "demo-candidate-vivek-rao": buildDemoCandidateProfile(recruiterCandidateListDemo[4]),
+  "demo-candidate-sneha-kulkarni": buildDemoCandidateProfile(recruiterCandidateListDemo[5]),
+  "demo-candidate-farah-khan": buildDemoCandidateProfile(recruiterCandidateListDemo[6]),
+  "demo-candidate-aditi-sen": buildDemoCandidateProfile(recruiterCandidateListDemo[7]),
+  "demo-candidate-karthik-iyer": buildDemoCandidateProfile(recruiterCandidateListDemo[8], {
+    location: "Chennai, India"
+  }),
+  "demo-candidate-deepak-joshi": buildDemoCandidateProfile(recruiterCandidateListDemo[9])
 };
 
 export const defaultGeneratedJobDescription: GeneratedJobDescription = {

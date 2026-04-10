@@ -6,7 +6,8 @@ import {
   hrDashboardData,
   jobIntakeQuestions,
   landingContent,
-  publicJobCards
+  publicJobCards,
+  recruiterCandidateProfileDemo
 } from "@/lib/mock-data";
 import type {
   ApplicationSubmissionResult,
@@ -1619,7 +1620,7 @@ export async function getCandidateProfile(
 ): Promise<CandidateProfileData> {
   return requestOrFallback(`/candidates/${candidateId}`, undefined, async () => {
     await sleep(180);
-    return {
+    return recruiterCandidateProfileDemo[candidateId] ?? {
       ...candidateProfile,
       id: candidateId
     };
