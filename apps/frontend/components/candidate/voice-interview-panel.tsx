@@ -645,7 +645,7 @@ export function VoiceInterviewPanel({
               >
                 Try voice again
               </button>
-            )}
+            ) : null}
             <span className="muted">
               {phase === "recording"
                 ? "Speak naturally and pause when you are done."
