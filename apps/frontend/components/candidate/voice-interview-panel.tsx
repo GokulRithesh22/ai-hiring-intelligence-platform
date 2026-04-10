@@ -6,7 +6,8 @@ import {
   getVoiceInterviewConfig,
   startVoiceInterviewConversation,
   submitVoiceInterviewTurn,
-  synthesizeVoicePrompt
+  synthesizeVoicePrompt,
+  transcribeVoiceAnswer
 } from "@/lib/api-adapters";
 import type {
   VoiceInterviewConfig,
@@ -235,8 +236,21 @@ export function VoiceInterviewPanel({
               return;
             }
             const audioBase64 = await blobToBase64(blob);
+            const transcription = await transcribeVoiceAnswer({
+              audioBase64,
+              mimeType,
+              fileName: `voice-answer-${Date.now()}.webm`
+            });
+            const transcript = transcription.text.trim();
+
+            if (!transcript) {
+              setStatus("We couldn't hear a clear answer. Please try speaking again.");
+              return;
+            }
+
             const nextConversation = await submitVoiceInterviewTurn({
               conversationId: conversation.conversationId,
+              transcript,
               audioBase64,
               mimeType,
               fileName: `voice-answer-${Date.now()}.webm`
