@@ -117,7 +117,7 @@ export class ApplicationsService {
       throw new ApiError(404, "Related candidate or job not found");
     }
 
-    const questions = await generateInterviewQuestions({
+    const questions = await this.buildInterviewQuestions({
       jobTitle: job.title,
       jobDescription: job.approvedDescription ?? job.generatedDescription,
       resumeSummary: candidate.resumeText ?? candidate.currentCompany ?? "",
@@ -125,14 +125,66 @@ export class ApplicationsService {
         (screening?.resumeAnalysis as StructuredResumeAnalysis | undefined) ?? undefined,
       jobAnalysis:
         (screening?.jobAnalysis as StructuredJobDescriptionAnalysis | undefined) ?? undefined,
-      screening: {
-        strengths: screening?.strengths ?? [],
-        weaknesses: screening?.weaknesses ?? []
-      }
+      strengths: screening?.strengths ?? [],
+      weaknesses: screening?.weaknesses ?? []
     });
 
     await applicationsRepository.updateStatus(applicationId, "INTERVIEW_PENDING");
     return interviewSessionsRepository.create(applicationId, questions);
+  }
+
+  private async buildInterviewQuestions(input: {
+    jobTitle: string;
+    jobDescription: string;
+    resumeSummary: string;
+    resumeAnalysis?: StructuredResumeAnalysis;
+    jobAnalysis?: StructuredJobDescriptionAnalysis;
+    strengths: string[];
+    weaknesses: string[];
+  }) {
+    try {
+      return await generateInterviewQuestions({
+        jobTitle: input.jobTitle,
+        jobDescription: input.jobDescription,
+        resumeSummary: input.resumeSummary,
+        resumeAnalysis: input.resumeAnalysis,
+        jobAnalysis: input.jobAnalysis,
+        screening: {
+          strengths: input.strengths,
+          weaknesses: input.weaknesses
+        }
+      });
+    } catch {
+      return this.buildFallbackInterviewQuestions(input);
+    }
+  }
+
+  private buildFallbackInterviewQuestions(input: {
+    jobTitle: string;
+    resumeSummary: string;
+    strengths: string[];
+    weaknesses: string[];
+  }) {
+    const firstStrength = input.strengths[0] ?? `your fit for the ${input.jobTitle} role`;
+    const firstWeakness = input.weaknesses[0] ?? `one area where you had to stretch beyond your comfort zone`;
+    const resumeSignal = this.extractResumeSignal(input.resumeSummary);
+
+    return [
+      `Your resume suggests strength around ${firstStrength}. Which project best proves that, and what result did you personally drive?`,
+      `Tell me about a time you handled ${firstWeakness} and how you closed the gap.`,
+      `For this ${input.jobTitle} role, how would you approach the first 30 days on the job?`,
+      `Walk me through a difficult stakeholder or customer situation you handled and the outcome you achieved.`,
+      `I noticed ${resumeSignal}. What decisions did you make personally, and how did you measure success?`
+    ];
+  }
+
+  private extractResumeSignal(resumeSummary: string) {
+    const normalized = resumeSummary.replace(/\s+/g, " ").trim();
+    if (!normalized) {
+      return "relevant operational or business experience in your background";
+    }
+
+    return normalized.slice(0, 140);
   }
 
   async shortlist(applicationId: string) {
