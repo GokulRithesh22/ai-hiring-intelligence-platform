@@ -250,10 +250,7 @@ export function VoiceInterviewPanel({
 
             const nextConversation = await submitVoiceInterviewTurn({
               conversationId: conversation.conversationId,
-              transcript,
-              audioBase64,
-              mimeType,
-              fileName: `voice-answer-${Date.now()}.webm`
+              transcript
             });
 
             setConversation(nextConversation);

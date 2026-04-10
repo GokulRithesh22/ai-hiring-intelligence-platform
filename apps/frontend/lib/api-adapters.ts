@@ -1717,6 +1717,23 @@ export async function transcribeVoiceAnswer(input: {
   mimeType: string;
   fileName?: string;
 }): Promise<VoiceTranscriptionResult> {
+  if (typeof window !== "undefined") {
+    const response = await fetch("/api/voice/interview/transcribe", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(input),
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`Voice transcription failed: ${response.status}`);
+    }
+
+    return (await response.json()) as VoiceTranscriptionResult;
+  }
+
   return requestOrFallback(
     "/voice/interview/transcribe",
     {
