@@ -59,6 +59,49 @@ const fallbackApplicationSubmissionResult: ApplicationSubmissionResult = {
     "What dashboards or analyses do you rely on to identify growth bottlenecks early?"
   ]
 };
+
+function buildAssociateCenterManagerDemoApplicationResult(payload: CandidateApplicationPayload) {
+  if (payload.jobId !== "associate-center-manager") {
+    return null;
+  }
+
+  const normalizedFileName = payload.resumeFile?.name.toLowerCase() ?? "";
+  const normalizedName = payload.fullName.trim().toLowerCase();
+  const isMismatch =
+    normalizedFileName.includes("mismatch") ||
+    normalizedName.includes("karthik iyer") ||
+    normalizedName.includes("karthik");
+
+  if (isMismatch) {
+    return {
+      applicationId: "demo-app-associate-center-manager-mismatch",
+      candidateId: "demo-candidate-karthik-iyer",
+      interviewSessionId: null,
+      status: "rejected" as const,
+      statusMessage: "We have received your application.",
+      interviewInvitation: null,
+      interviewQuestions: []
+    } satisfies ApplicationSubmissionResult;
+  }
+
+  return {
+    applicationId: "demo-app-associate-center-manager-match",
+    candidateId: "demo-candidate-rahul-verma",
+    interviewSessionId: null,
+    status: "qualified" as const,
+    statusMessage:
+      "Application submitted successfully. You are eligible to continue to the AI interview.",
+    interviewInvitation:
+      "You qualified for the AI interview based on semantic resume screening and business rule checks.",
+    interviewQuestions: [
+      "Your resume suggests direct experience in fitness center and retail operations. Which project best shows you are ready for this Associate Center Manager role, and what outcome did you personally drive?",
+      "Tell me about a time you coordinated front desk staff, trainers, or support teams during a busy operating window. How did you keep service quality high?",
+      "A member raises a serious complaint during peak hours. How would you handle the situation while keeping center operations stable?",
+      "What operating metrics would you watch daily in your first month to improve retention, renewals, and member experience?",
+      "Describe a situation where you improved complaint resolution or member satisfaction. What did you change and how did you measure success?"
+    ]
+  } satisfies ApplicationSubmissionResult;
+}
 const mockVoiceConversations = new Map<
   string,
   {
@@ -1470,6 +1513,12 @@ export async function getApplicationPortal(jobId: string): Promise<ApplicationPo
 export async function submitCandidateApplication(
   payload: CandidateApplicationPayload
 ): Promise<ApplicationSubmissionResult> {
+  const demoResult = buildAssociateCenterManagerDemoApplicationResult(payload);
+  if (demoResult) {
+    await sleep(250);
+    return demoResult;
+  }
+
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(360);
     const fallbackResult: ApplicationSubmissionResult = {
