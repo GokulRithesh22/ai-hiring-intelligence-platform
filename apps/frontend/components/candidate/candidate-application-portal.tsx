@@ -314,13 +314,15 @@ export function CandidateApplicationPortal({
                 <span
                   className={`status-pill ${result.status === "qualified" ? "status-approved" : "status-stop"}`}
                 >
-                  {result.status === "qualified" ? "Interview invited" : "Not advanced"}
+                  {result.status === "qualified" ? "Interview invited" : "Application received"}
                 </span>
               </div>
-              <p className="muted">
-                {result.interviewInvitation ??
-                  "We have stored your application and will email you if the next stage opens."}
-              </p>
+              {result.status === "qualified" ? (
+                <p className="muted">
+                  {result.interviewInvitation ??
+                    "We have stored your application and will email you if the next stage opens."}
+                </p>
+              ) : null}
             </article>
 
             {result.interviewQuestions.length === 0 ? null : (

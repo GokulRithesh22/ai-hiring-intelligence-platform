@@ -138,9 +138,8 @@ export class PublicJobsService {
         applicationId: updatedApplication.id,
         candidateId: candidate.id,
         status: "rejected" as const,
-        statusMessage:
-          "Application submitted successfully, but we could not move it to the interview stage.",
-        interviewInvitation: gate.reasons.join(" "),
+        statusMessage: "We have received your application.",
+        interviewInvitation: null,
         interviewQuestions: []
       };
     }

@@ -609,13 +609,13 @@ export function VoiceInterviewPanel({
           {!conversation.completed ? (
             <div className="stack" style={{ gap: 12 }}>
               <label className="subtle-label" htmlFor="manual-answer">
-                Type answer fallback
+                Type your answer
               </label>
               <textarea
                 id="manual-answer"
                 value={manualAnswer}
                 onChange={(event) => setManualAnswer(event.target.value)}
-                placeholder="If voice capture misses your answer, type it here and continue the demo."
+                placeholder="Type your answer here if needed."
                 rows={4}
                 style={{
                   width: "100%",
@@ -634,11 +634,8 @@ export function VoiceInterviewPanel({
                   onClick={submitManualAnswer}
                   disabled={isPending || manualAnswer.trim().length < 8}
                 >
-                  Submit typed answer
+                  Continue
                 </button>
-                <span className="muted">
-                  Jugaad mode for the demo: this keeps the interview moving even if browser voice capture is flaky.
-                </span>
               </div>
             </div>
           ) : null}
