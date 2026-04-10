@@ -1655,6 +1655,11 @@ export async function getVoiceInterviewConfig(): Promise<VoiceInterviewConfig> {
 export async function startVoiceInterviewConversation(
   input: StartVoiceInterviewConversationInput
 ): Promise<VoiceInterviewConversationState> {
+  if (!input.interviewSessionId && !input.applicationId) {
+    await sleep(120);
+    return startMockVoiceConversation(input);
+  }
+
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(120);
     return startMockVoiceConversation(input);
@@ -1735,6 +1740,11 @@ export async function synthesizeVoicePrompt(text: string): Promise<Blob | null> 
 export async function submitVoiceInterviewTurn(
   input: SubmitVoiceInterviewTurnInput
 ): Promise<VoiceInterviewConversationState> {
+  if (mockVoiceConversations.has(input.conversationId)) {
+    await sleep(180);
+    return respondMockVoiceConversation(input);
+  }
+
   if (apiMode !== "live" || !apiBaseUrl) {
     await sleep(240);
     return respondMockVoiceConversation(input);
