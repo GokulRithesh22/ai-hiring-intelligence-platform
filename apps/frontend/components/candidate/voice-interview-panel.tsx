@@ -77,6 +77,7 @@ export function VoiceInterviewPanel({
   const [error, setError] = useState<string | null>(null);
   const [audioAvailable, setAudioAvailable] = useState(false);
   const [playbackFailed, setPlaybackFailed] = useState(false);
+  const [manualAnswer, setManualAnswer] = useState("");
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -175,6 +176,7 @@ export function VoiceInterviewPanel({
 
   const startInterview = () => {
     setError(null);
+    setManualAnswer("");
     setStatus("Starting conversational interview...");
 
     startTransition(async () => {
@@ -210,6 +212,7 @@ export function VoiceInterviewPanel({
 
   const startRecording = async () => {
     setError(null);
+    setManualAnswer("");
 
     if (!conversation || conversation.completed) {
       return;
@@ -300,24 +303,17 @@ export function VoiceInterviewPanel({
                 ).text.trim();
 
             if (!transcript) {
-              setStatus("We couldn't hear a clear answer. Please try speaking again.");
+              setStatus("Voice capture missed that answer. Type your answer below to continue the demo.");
               return;
             }
-
-            const nextConversation = await submitVoiceInterviewTurn({
-              conversationId: conversation.conversationId,
-              transcript
-            });
-
-            setConversation(nextConversation);
-            setStatus(nextConversation.status);
+            await submitTranscriptAnswer(transcript);
           } catch (caughtError) {
             setError(
               caughtError instanceof Error
                 ? caughtError.message
                 : "Failed to process the recorded answer."
             );
-            setStatus("We couldn't process that answer. Please try again.");
+            setStatus("Voice capture hit an issue. Type your answer below to continue the demo.");
           } finally {
             cleanupRecordingMonitoring();
             speechRecognitionRef.current = null;
@@ -368,6 +364,38 @@ export function VoiceInterviewPanel({
           ? "Question replayed. You can answer now."
           : "Question ready. Audio playback was blocked, but you can still read and answer."
       );
+    });
+  };
+
+  const submitTranscriptAnswer = async (transcript: string) => {
+    if (!conversation || !transcript.trim()) {
+      return;
+    }
+
+    const nextConversation = await submitVoiceInterviewTurn({
+      conversationId: conversation.conversationId,
+      transcript: transcript.trim()
+    });
+
+    setConversation(nextConversation);
+    setStatus(nextConversation.status);
+    setManualAnswer("");
+  };
+
+  const submitManualAnswer = () => {
+    setError(null);
+    startTransition(async () => {
+      try {
+        setStatus("Submitting your answer...");
+        await submitTranscriptAnswer(manualAnswer);
+      } catch (caughtError) {
+        setError(
+          caughtError instanceof Error
+            ? caughtError.message
+            : "Failed to submit the typed answer."
+        );
+        setStatus("We couldn't submit that answer. Please try again.");
+      }
     });
   };
 
@@ -577,6 +605,43 @@ export function VoiceInterviewPanel({
                 : "Once the interview starts, the AI speaks, listens, and advances automatically like a phone conversation."}
             </span>
           </div>
+
+          {!conversation.completed ? (
+            <div className="stack" style={{ gap: 12 }}>
+              <label className="subtle-label" htmlFor="manual-answer">
+                Type answer fallback
+              </label>
+              <textarea
+                id="manual-answer"
+                value={manualAnswer}
+                onChange={(event) => setManualAnswer(event.target.value)}
+                placeholder="If voice capture misses your answer, type it here and continue the demo."
+                rows={4}
+                style={{
+                  width: "100%",
+                  borderRadius: 18,
+                  border: "1px solid rgba(99, 102, 241, 0.2)",
+                  padding: "14px 16px",
+                  font: "inherit",
+                  resize: "vertical",
+                  background: "rgba(255,255,255,0.9)"
+                }}
+              />
+              <div className="shell-actions">
+                <button
+                  className="button button-primary"
+                  type="button"
+                  onClick={submitManualAnswer}
+                  disabled={isPending || manualAnswer.trim().length < 8}
+                >
+                  Submit typed answer
+                </button>
+                <span className="muted">
+                  Jugaad mode for the demo: this keeps the interview moving even if browser voice capture is flaky.
+                </span>
+              </div>
+            </div>
+          ) : null}
 
           {!conversation.evaluation ? null : (
             <div className="stack-lg">
