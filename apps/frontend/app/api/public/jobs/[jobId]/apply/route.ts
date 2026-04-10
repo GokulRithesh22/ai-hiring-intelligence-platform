@@ -73,31 +73,39 @@ export async function POST(
     fullName: typeof formData.get("fullName") === "string" ? (formData.get("fullName") as string) : null
   });
 
-  const response = await fetch(`${apiBaseUrl}/public/jobs/${jobId}/apply`, {
-    method: "POST",
-    body: formData,
-    cache: "no-store"
-  });
+  try {
+    const response = await fetch(`${apiBaseUrl}/public/jobs/${jobId}/apply`, {
+      method: "POST",
+      body: formData,
+      cache: "no-store"
+    });
 
-  const contentType = response.headers.get("content-type") ?? "";
-  if (contentType.includes("application/json")) {
-    const payload = await response.json();
+    const contentType = response.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const payload = await response.json();
+
+      if (!response.ok && fallbackResponse) {
+        return NextResponse.json(fallbackResponse, { status: 201 });
+      }
+
+      return NextResponse.json(payload, { status: response.status });
+    }
 
     if (!response.ok && fallbackResponse) {
       return NextResponse.json(fallbackResponse, { status: 201 });
     }
 
-    return NextResponse.json(payload, { status: response.status });
-  }
+    return NextResponse.json(
+      {
+        error: response.ok ? null : "Application submit failed."
+      },
+      { status: response.status }
+    );
+  } catch {
+    if (fallbackResponse) {
+      return NextResponse.json(fallbackResponse, { status: 201 });
+    }
 
-  if (!response.ok && fallbackResponse) {
-    return NextResponse.json(fallbackResponse, { status: 201 });
+    return NextResponse.json({ error: "Application submit failed." }, { status: 500 });
   }
-
-  return NextResponse.json(
-    {
-      error: response.ok ? null : "Application submit failed."
-    },
-    { status: response.status }
-  );
 }
