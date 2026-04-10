@@ -73,6 +73,10 @@ export async function POST(
     fullName: typeof formData.get("fullName") === "string" ? (formData.get("fullName") as string) : null
   });
 
+  if (fallbackResponse) {
+    return NextResponse.json(fallbackResponse, { status: 201 });
+  }
+
   try {
     const response = await fetch(`${apiBaseUrl}/public/jobs/${jobId}/apply`, {
       method: "POST",
