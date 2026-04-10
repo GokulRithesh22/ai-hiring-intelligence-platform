@@ -92,6 +92,7 @@ export function VoiceInterviewPanel({
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const spokenTurnIdsRef = useRef<Set<string>>(new Set());
+  const isSpeakingRef = useRef(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const monitorFrameRef = useRef<number | null>(null);
@@ -104,6 +105,10 @@ export function VoiceInterviewPanel({
   useEffect(() => {
     void getVoiceInterviewConfig().then(setConfig);
   }, []);
+
+  useEffect(() => {
+    isSpeakingRef.current = isSpeaking;
+  }, [isSpeaking]);
 
   useEffect(() => {
     return () => {
@@ -129,6 +134,7 @@ export function VoiceInterviewPanel({
 
     void (async () => {
       setIsSpeaking(true);
+      isSpeakingRef.current = true;
       setPhase("speaking");
       let anyPlaybackFailed = false;
 
@@ -152,6 +158,7 @@ export function VoiceInterviewPanel({
 
       if (!cancelled) {
         setIsSpeaking(false);
+        isSpeakingRef.current = false;
         if (conversation?.completed) {
           setPhase("completed");
           setStatus(conversation.status);
@@ -218,7 +225,7 @@ export function VoiceInterviewPanel({
       return;
     }
 
-    if (isSpeaking) {
+    if (isSpeakingRef.current) {
       setStatus("Please wait for the AI prompt to finish before answering.");
       return;
     }
@@ -361,10 +368,12 @@ export function VoiceInterviewPanel({
     setError(null);
     startTransition(async () => {
       setIsSpeaking(true);
+      isSpeakingRef.current = true;
       setPhase("speaking");
       setStatus("Playing the current question...");
       const played = await playPrompt(prompt, config);
       setIsSpeaking(false);
+      isSpeakingRef.current = false;
       setAudioAvailable(played);
       setPlaybackFailed(!played);
       setStatus(
