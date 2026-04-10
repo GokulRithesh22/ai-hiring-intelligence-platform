@@ -20,6 +20,28 @@ type VoiceInterviewPanelProps = {
   applicationId?: string | null;
 };
 
+type BrowserSpeechRecognition = {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: {
+    resultIndex: number;
+    results: ArrayLike<
+      ArrayLike<{
+        transcript: string;
+      }>
+    >;
+  }) => void) | null;
+  onerror: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+
+type BrowserWindow = Window & {
+  SpeechRecognition?: new () => BrowserSpeechRecognition;
+  webkitSpeechRecognition?: new () => BrowserSpeechRecognition;
+};
+
 function blobToBase64(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -66,6 +88,8 @@ export function VoiceInterviewPanel({
   const stopTimeoutRef = useRef<number | null>(null);
   const speechDetectedRef = useRef(false);
   const silenceStartedAtRef = useRef<number | null>(null);
+  const speechRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const recognizedTranscriptRef = useRef("");
 
   useEffect(() => {
     void getVoiceInterviewConfig().then(setConfig);
@@ -77,6 +101,7 @@ export function VoiceInterviewPanel({
         window.speechSynthesis.cancel();
       }
       cleanupRecordingMonitoring();
+      speechRecognitionRef.current?.stop();
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
@@ -215,6 +240,32 @@ export function VoiceInterviewPanel({
       chunksRef.current = [];
       speechDetectedRef.current = false;
       silenceStartedAtRef.current = null;
+      recognizedTranscriptRef.current = "";
+
+      const browserWindow = window as BrowserWindow;
+      const SpeechRecognitionCtor =
+        browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition;
+
+      if (SpeechRecognitionCtor) {
+        const speechRecognition = new SpeechRecognitionCtor();
+        speechRecognition.continuous = true;
+        speechRecognition.interimResults = true;
+        speechRecognition.lang = "en-IN";
+        speechRecognition.onresult = (event) => {
+          let transcript = "";
+          for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            transcript += event.results[index]?.[0]?.transcript ?? "";
+          }
+          if (transcript.trim()) {
+            recognizedTranscriptRef.current = `${recognizedTranscriptRef.current} ${transcript}`.trim();
+          }
+        };
+        speechRecognition.onerror = () => undefined;
+        speechRecognition.start();
+        speechRecognitionRef.current = speechRecognition;
+      } else {
+        speechRecognitionRef.current = null;
+      }
 
       const recorder = new MediaRecorder(mediaStream);
       recorderRef.current = recorder;
@@ -236,12 +287,17 @@ export function VoiceInterviewPanel({
               return;
             }
             const audioBase64 = await blobToBase64(blob);
-            const transcription = await transcribeVoiceAnswer({
-              audioBase64,
-              mimeType,
-              fileName: `voice-answer-${Date.now()}.webm`
-            });
-            const transcript = transcription.text.trim();
+            speechRecognitionRef.current?.stop();
+            const browserTranscript = recognizedTranscriptRef.current.trim();
+            const transcript = browserTranscript
+              ? browserTranscript
+              : (
+                  await transcribeVoiceAnswer({
+                    audioBase64,
+                    mimeType,
+                    fileName: `voice-answer-${Date.now()}.webm`
+                  })
+                ).text.trim();
 
             if (!transcript) {
               setStatus("We couldn't hear a clear answer. Please try speaking again.");
@@ -264,6 +320,8 @@ export function VoiceInterviewPanel({
             setStatus("We couldn't process that answer. Please try again.");
           } finally {
             cleanupRecordingMonitoring();
+            speechRecognitionRef.current = null;
+            recognizedTranscriptRef.current = "";
             setRecording(false);
             streamRef.current?.getTracks().forEach((track) => track.stop());
             streamRef.current = null;
@@ -285,6 +343,7 @@ export function VoiceInterviewPanel({
   };
 
   const stopRecording = () => {
+    speechRecognitionRef.current?.stop();
     recorderRef.current?.stop();
     setRecording(false);
   };
