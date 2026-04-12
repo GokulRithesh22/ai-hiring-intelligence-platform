@@ -1,30 +1,43 @@
-import { RecruiterDashboard } from "@/components/recruiter/recruiter-dashboard";
-import { RecruiterShell } from "@/components/recruiter/recruiter-shell";
-import { getRecruiterOverview } from "@/lib/recruiter-api";
-import { requireRecruiterSession } from "@/lib/recruiter-auth";
+import Link from "next/link";
 
-type RecruiterDashboardPageProps = {
-  searchParams?: Promise<{
-    scope?: string;
-  }>;
-};
+import { getRecruiterDashboardJobs } from "@/lib/wireframe-data";
 
-export default async function RecruiterDashboardPage({
-  searchParams
-}: RecruiterDashboardPageProps) {
-  const params = searchParams ? await searchParams : undefined;
-  const scope = params?.scope === "mine" ? "mine" : "all";
-
-  await requireRecruiterSession(`/dashboard${scope === "mine" ? "?scope=mine" : ""}`);
-  const data = await getRecruiterOverview(scope);
+export default function DashboardPage() {
+  const jobs = getRecruiterDashboardJobs();
 
   return (
-    <RecruiterShell
-      eyebrow="Recruiter Workspace"
-      title="Unified hiring dashboard"
-      description="Manage jobs, monitor the candidate pipeline, and track hiring analytics from one recruiter workspace."
-    >
-      <RecruiterDashboard data={data} />
-    </RecruiterShell>
+    <div className="wf-page">
+      <div className="wf-container wf-stack-lg">
+        <header className="wf-header">
+          <div className="wf-logo">LOGO</div>
+          <div className="wf-card">Profile</div>
+        </header>
+
+        <div className="wf-actions">
+          <Link className="wf-link-button" href="/create-job">
+            + Create Job
+          </Link>
+        </div>
+
+        <section className="wf-list">
+          {jobs.map((job) => (
+            <article className="wf-card wf-stack" key={job.id}>
+              <div className="wf-section">
+                <h2 className="wf-title" style={{ fontSize: 24 }}>
+                  {job.title}
+                </h2>
+                <p className="wf-text">Applicants count: {job.applicants}</p>
+                <p className="wf-text">Interview count: {job.interviews}</p>
+                <p className="wf-text">Shortlisted count: {job.shortlisted}</p>
+              </div>
+
+              <Link className="wf-link-button" href={`/job/${job.id}/pipeline`}>
+                View Pipeline
+              </Link>
+            </article>
+          ))}
+        </section>
+      </div>
+    </div>
   );
 }

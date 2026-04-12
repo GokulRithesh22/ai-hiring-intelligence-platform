@@ -1,26 +1,15 @@
-import { CandidateIntelligencePage } from "@/components/candidate/candidate-intelligence-page";
-import { RecruiterShell } from "@/components/recruiter/recruiter-shell";
-import { getProtectedCandidateProfile } from "@/lib/candidate-profile-server";
-import { requireRecruiterSession } from "@/lib/recruiter-auth";
+import { CandidateProfilePageContent } from "@/components/wireframe/candidate-profile-page";
 
-type RecruiterCandidatePageProps = {
+type CandidateProfilePageProps = {
   params: Promise<{
     candidateId: string;
   }>;
 };
 
-export default async function RecruiterCandidatePage({ params }: RecruiterCandidatePageProps) {
+export default async function CandidateProfilePage({
+  params
+}: CandidateProfilePageProps) {
   const { candidateId } = await params;
-  await requireRecruiterSession(`/dashboard/candidates/${candidateId}`);
-  const profile = await getProtectedCandidateProfile(candidateId);
 
-  return (
-    <RecruiterShell
-      eyebrow="Recruiter Intelligence View"
-      title={`${profile.name} intelligence report`}
-      description="Review resume insights, interview transcript evidence, weighted AI scoring, and confidence before moving the candidate forward."
-    >
-      <CandidateIntelligencePage profile={profile} />
-    </RecruiterShell>
-  );
+  return <CandidateProfilePageContent candidateId={candidateId} />;
 }
