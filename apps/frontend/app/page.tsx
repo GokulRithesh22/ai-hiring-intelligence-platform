@@ -1,3 +1,9 @@
+import { redirect } from "next/navigation";
+
+export default function HomePage() {
+  redirect("/candidate/login");
+}
+
 import { LandingPage } from "@/components/landing/landing-page";
 import { getPublicJobs } from "@/lib/api-adapters";
 
